@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Learning & Development — Monthly Metrics Dashboard</title>
+<style>
+:root{
+  --blue:#214592; --orange:#dd6e0c; --charcoal:#444444;
+  --grey-bg:#f2f2f2; --border:#e1e0d9;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{margin:0;font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;background:#f7f7f6;color:var(--charcoal);}
+.topnav{background:var(--blue);padding:0 24px;display:flex;gap:4px;flex-wrap:wrap;position:sticky;top:0;z-index:10;}
+.navlink{color:#cfd8ee;text-decoration:none;font-size:12.5px;font-weight:700;padding:14px 12px;letter-spacing:.02em;cursor:pointer;}
+.navlink:hover{color:#fff;}
+.navlink.active{color:#fff;border-bottom:3px solid var(--orange);}
+.wrap{max-width:1240px;margin:0 auto;padding:32px 24px 64px;}
+.masthead h1{font-size:26px;font-weight:700;color:var(--blue);margin:0 0 4px;}
+.masthead p{margin:0 0 8px;font-size:13px;color:var(--charcoal);}
+section.page-section{display:none;padding-top:4px;}
+section.page-section.active{display:block;}
+section h2.section-title{font-size:20px;font-weight:700;color:var(--blue);margin:0 0 2px;}
+section p.section-sub{margin:0 0 20px;font-size:13px;color:var(--charcoal);}
+.section-header{background:var(--blue);color:#fff;font-size:13px;font-weight:700;letter-spacing:.03em;padding:10px 16px;border-radius:6px;margin:28px 0 16px;}
+.card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px;}
+.card h3{font-size:14px;font-weight:700;margin:0 0 12px;color:var(--charcoal);text-align:center;}
+.chart-row{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;}
+.two-col{display:grid;grid-template-columns:1.5fr 1fr;gap:16px;align-items:start;}
+.chart-box{position:relative;width:100%;}
+table.bu-table{width:100%;border-collapse:collapse;font-size:12px;}
+table.bu-table th{background:#3d5fa8;color:#fff;font-weight:700;padding:6px 8px;text-align:right;white-space:nowrap;}
+table.bu-table th:first-child, table.bu-table td:first-child{text-align:left;}
+table.bu-table td{padding:5px 8px;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap;}
+table.bu-table tr:nth-child(even) td{background:var(--grey-bg);}
+table.bu-table tr.total td{font-weight:700;color:var(--blue);border-top:2px solid var(--blue);border-bottom:none;}
+.scroll-table{max-height:520px;overflow-y:auto;}
+.scroll-table table.bu-table thead th{position:sticky;top:0;z-index:1;}
+th.sortable .sort-arrow{display:inline-block;width:10px;font-size:10px;}
+th.sortable:hover{background:#2c4d84;}
+.footnote{font-size:11px;color:#888;margin-top:16px;line-height:1.5;}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+.kpi-card{background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.kpi-head{background:var(--blue);color:#fff;font-size:11px;font-weight:700;text-align:center;padding:8px 6px;}
+.kpi-number{text-align:center;font-size:26px;font-weight:700;color:var(--blue);background:var(--grey-bg);padding:10px 4px 2px;}
+.kpi-spark{background:var(--grey-bg);height:70px;}
+.kpi-ytd{text-align:center;font-size:11px;color:var(--charcoal);background:var(--grey-bg);padding:4px 4px 10px;}
+@media (max-width:900px){.chart-row,.two-col,.kpi-row{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<nav class="topnav">
+<a class="navlink" href="#dashboard">Dashboard</a>
+<a class="navlink" href="#summary">Summary</a>
+<a class="navlink" href="#hours-by-bu">Hours by BU</a>
+<a class="navlink" href="#counts-by-bu-combined">Counts by BU (Combined)</a>
+<a class="navlink" href="#counts-by-bu-courses">Counts by BU (Courses)</a>
+<a class="navlink" href="#counts-by-bu-events">Counts by BU (Events)</a>
+<a class="navlink" href="#internal-vs-external">Internal vs External</a>
+<a class="navlink" href="#internal-counts-by-bu">Internal Counts by BU</a>
+<a class="navlink" href="#external-counts-by-bu">External Counts by BU</a>
+<a class="navlink" href="#course-intake">Course Intake</a>
+<a class="navlink" href="#ast">AST</a>
+</nav>
+<div class="wrap">
+  <header class="masthead">
+    <h1>Learning &amp; Development — Monthly Metrics Dashboard</h1>
+    <p>January – July 2026 &nbsp;|&nbsp; Data source: Generated Learning Hours &amp; BU Report</p>
+  </header>
+  
+<section class="page-section" id="dashboard">
+  <h2 class="section-title">Dashboard</h2>
+  <p class="section-sub">Overview | January – July 2026</p>
+
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="kpi-head">TOTAL LEARNING HOURS (JUL)</div>
+      <div class="kpi-number">2,052.4</div>
+      <div class="kpi-spark"><canvas id="dash_spark1"></canvas></div>
+      <div class="kpi-ytd">YTD: 17,793.4</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-head">LEARNING ACTIVITIES (JUL)</div>
+      <div class="kpi-number">3,949</div>
+      <div class="kpi-spark"><canvas id="dash_spark2"></canvas></div>
+      <div class="kpi-ytd">YTD: 32,951</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-head">ONLINE COURSE HOURS (JUL)</div>
+      <div class="kpi-number">1,983.4</div>
+      <div class="kpi-spark"><canvas id="dash_spark3"></canvas></div>
+      <div class="kpi-ytd">YTD: 15,294.9</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-head">IN-CLASS EVENT HOURS (JUL)</div>
+      <div class="kpi-number">69.0</div>
+      <div class="kpi-spark"><canvas id="dash_spark4"></canvas></div>
+      <div class="kpi-ytd">YTD: 2,498.5</div>
+    </div>
+  </div>
+
+  <div class="section-header">MONTHLY LEARNING HOURS <a href="#summary" style="color:#fff;font-weight:400;text-decoration:underline;font-size:11px;">Full data &darr;</a></div>
+  <div class="chart-row">
+    <div class="card"><h3>Monthly Learning Hours by Delivery Mode — 2026</h3>
+      <div class="chart-box" style="height:280px;"><canvas id="dash_monthlyBar"></canvas></div></div>
+    <div class="card"><h3>Learning Hours by Delivery Mode — YTD</h3>
+      <div class="chart-box" style="height:280px;"><canvas id="dash_deliveryPie"></canvas></div></div>
+  </div>
+
+  <div class="section-header">INTERNAL VS. EXTERNAL LEARNING ACTIVITY <a href="#internal-vs-external" style="color:#fff;font-weight:400;text-decoration:underline;font-size:11px;">Full data &darr;</a></div>
+  <div class="chart-row">
+    <div class="card"><h3>Internal vs. External — Monthly</h3>
+      <div class="chart-box" style="height:260px;"><canvas id="dash_intExtBar"></canvas></div></div>
+    <div class="card"><h3>Internal vs. External Share — YTD</h3>
+      <div class="chart-box" style="height:260px;"><canvas id="dash_intExtPie"></canvas></div></div>
+  </div>
+
+  <div class="section-header">LEARNING HOURS BY BUSINESS UNIT (YTD) <a href="#hours-by-bu" style="color:#fff;font-weight:400;text-decoration:underline;font-size:11px;">Full data &darr;</a></div>
+  <div class="card"><h3>Top 8 Business Units by Learning Hours</h3>
+    <div class="chart-box" style="height:280px;"><canvas id="dash_topHoursBar"></canvas></div></div>
+
+  <div class="section-header">LEARNING ACTIVITY COUNTS BY BUSINESS UNIT (YTD) <a href="#counts-by-bu-combined" style="color:#fff;font-weight:400;text-decoration:underline;font-size:11px;">Full data &darr;</a></div>
+  <div class="card"><h3>Top 8 Business Units by Learning Activities</h3>
+    <div class="chart-box" style="height:280px;"><canvas id="dash_topCountsBar"></canvas></div></div>
+
+  <p class="footnote">This overview summarizes the workbook. Jump to any section above for the full monthly, business-unit-level detail behind each worksheet.</p>
+</section>
+
+<section class="page-section" id="summary">
+  <h2 class="section-title">Learning Hours Summary</h2>
+  <p class="section-sub">Alliance University | Total learning hours by month, Jan – Jul 2026</p>
+  <div class="chart-row">
+    <div class="card">
+      <table class="bu-table"><thead><tr><th>Month</th><th>Online Courses (hrs)</th><th>In-Class Events (hrs)</th><th>Total Hours</th><th>Learning Activities (count)</th></tr></thead>
+      <tbody><tr><td>Jan-26</td><td>3,903.8</td><td>392.0</td><td>4,295.8</td><td>6,371</td></tr>
+<tr><td>Feb-26</td><td>1,189.5</td><td>773.0</td><td>1,962.5</td><td>3,160</td></tr>
+<tr><td>Mar-26</td><td>1,661.1</td><td>241.5</td><td>1,902.6</td><td>3,613</td></tr>
+<tr><td>Apr-26</td><td>1,971.9</td><td>294.5</td><td>2,266.4</td><td>3,998</td></tr>
+<tr><td>May-26</td><td>2,057.3</td><td>221.5</td><td>2,278.8</td><td>5,487</td></tr>
+<tr><td>Jun-26</td><td>2,527.9</td><td>507.0</td><td>3,034.9</td><td>6,373</td></tr>
+<tr><td>Jul-26</td><td>1,983.4</td><td>69.0</td><td>2,052.4</td><td>3,949</td></tr>
+<tr class="total"><td>TOTAL</td><td>15,294.9</td><td>2,498.5</td><td>17,793.4</td><td>32,951</td></tr>
+</tbody></table>
+    </div>
+    <div class="card"><h3>Monthly Learning Hours by Delivery Mode</h3>
+      <div class="chart-box" style="height:280px;"><canvas id="sum_monthlyBar"></canvas></div></div>
+  </div>
+  <div class="chart-row" style="margin-top:16px;">
+    <div class="card"><h3>Learning Hours by Delivery Mode — YTD</h3>
+      <div class="chart-box" style="height:260px;"><canvas id="sum_deliveryPie"></canvas></div></div>
+    <div class="card"><h3>Learning Activities — Monthly Trend</h3>
+      <div class="chart-box" style="height:260px;"><canvas id="sum_activitiesLine"></canvas></div></div>
+  </div>
+  <p class="footnote">Note: 5,103 course completions (220 course titles) have no duration value in the source export and are excluded from hours totals but included in counts (e.g., Sexual Harassment in the Workplace, Celebrating Diversity). In-class event hours include only records marked &ldquo;Attended = Yes.&rdquo;</p>
+</section>
+
+<section class="page-section" id="hours-by-bu">
+  <h2 class="section-title">Total Learning Hours by Business Unit</h2>
+  <p class="section-sub">Monthly learning hours (Online Courses + In-Class Events) by business unit | Jan – Jul 2026</p>
+  <div class="two-col">
+    <div class="card"><table class="bu-table"><thead><tr><th>Business Unit</th><th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>May</th><th>Jun</th><th>Jul</th><th>TOTAL</th></tr></thead><tbody><tr><td>AAS - Air Labs</td><td>162.4</td><td>36.7</td><td>21.4</td><td>58.9</td><td>29.4</td><td>34.8</td><td>19.0</td><td>362.6</td></tr>
+<tr><td>ACS - Continuous Emissions Mont</td><td>422.9</td><td>102.5</td><td>95.6</td><td>145.1</td><td>154.2</td><td>150.0</td><td>38.6</td><td>1,108.9</td></tr>
+<tr><td>AEL - Environmental Labs</td><td>267.5</td><td>77.8</td><td>149.5</td><td>101.5</td><td>129.4</td><td>261.2</td><td>121.4</td><td>1,108.3</td></tr>
+<tr><td>AEM - Leak Detection Services</td><td>2,072.8</td><td>521.5</td><td>652.4</td><td>1,174.9</td><td>1,247.7</td><td>1,510.0</td><td>1,062.4</td><td>8,241.7</td></tr>
+<tr><td>AQM - Ambient Air Monitoring</td><td>10.3</td><td>4.2</td><td>3.1</td><td>0.4</td><td>4.7</td><td>17.8</td><td>13.8</td><td>54.3</td></tr>
+<tr><td>ARE - Engineering</td><td>1.2</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>0.0</td><td>1.2</td></tr>
+<tr><td>ARR - Remediation</td><td>3.6</td><td>0.5</td><td>0.0</td><td>4.0</td><td>0.5</td><td>9.4</td><td>4.9</td><td>22.9</td></tr>
+<tr><td>ARS - Due Diligence</td><td>5.3</td><td>10.8</td><td>0.2</td><td>1.5</td><td>0.2</td><td>0.2</td><td>0.2</td><td>18.4</td></tr>
+<tr><td>AST - Stack Testing</td><td>983.7</td><td>898.8</td><td>719.8</td><td>489.6</td><td>580.0</td><td>753.6</td><td>672.6</td><td>5,098.1</td></tr>
+<tr><td>ATG - Alliance Technical Group</td><td>114.7</td><td>69.6</td><td>66.1</td><td>63.2</td><td>53.3</td><td>100.5</td><td>27.7</td><td>495.1</td></tr>
+<tr><td>ATS - Leak Detection Software</td><td>1.8</td><td>3.0</td><td>16.6</td><td>4.1</td><td>2.5</td><td>3.5</td><td>0.6</td><td>32.1</td></tr>
+<tr><td>DAS - Data Acquisition System</td><td>59.8</td><td>48.0</td><td>76.7</td><td>30.4</td><td>9.0</td><td>89.5</td><td>29.2</td><td>342.6</td></tr>
+<tr><td>EAC - Air Consulting</td><td>8.6</td><td>15.3</td><td>4.4</td><td>6.8</td><td>10.9</td><td>11.7</td><td>2.8</td><td>60.5</td></tr>
+<tr><td>ECG - Combustion Group</td><td>145.7</td><td>18.2</td><td>34.8</td><td>138.4</td><td>37.5</td><td>38.3</td><td>46.5</td><td>459.4</td></tr>
+<tr><td>EHS - EH & S Compliance</td><td>23.8</td><td>19.5</td><td>5.0</td><td>29.7</td><td>9.9</td><td>34.3</td><td>8.8</td><td>131.0</td></tr>
+<tr><td>OGL - Oil & Gas Labs</td><td>9.9</td><td>29.2</td><td>31.2</td><td>2.4</td><td>0.2</td><td>1.8</td><td>0.5</td><td>75.2</td></tr>
+<tr><td>TEM - Temp CEMS</td><td>0.2</td><td>105.4</td><td>3.1</td><td>2.2</td><td>0.4</td><td>16.8</td><td>0.0</td><td>128.1</td></tr>
+<tr><td>WNR - Water & NR Consulting</td><td>1.8</td><td>1.3</td><td>22.7</td><td>13.4</td><td>8.9</td><td>1.4</td><td>3.5</td><td>53.0</td></tr>
+<tr class="total"><td>TOTAL</td><td>4,296.0</td><td>1,962.3</td><td>1,902.6</td><td>2,266.5</td><td>2,278.7</td><td>3,034.8</td><td>2,052.5</td><td>17,793.4</td></tr>
+</tbody></table></div>
+    <div>
+      <div class="card" style="margin-bottom:16px;">
+        <h3>Top 8 Business Units by Learning Hours (YTD)</h3>
+        <div class="chart-box" style="height:230px;"><canvas id="hbu_topBar"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Monthly Total — Learning Hours</h3>
+        <div class="chart-box" style="height:230px;"><canvas id="hbu_trendLine"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <p class="footnote">Hours reflect completions with a duration value in the source export; in-class hours include only records marked &ldquo;Attended = Yes.&rdquo;</p>
+</section>
+
+<section class="page-section" id="counts-by-bu-combined">
+  <h2 class="section-title">Learning Activity Count by Business Unit</h2>
+  <p class="section-sub">Combined online course completions + in-class event attendance, by business unit | Jan – Jul 2026</p>
+  <div class="two-col">
+    <div class="card"><table class="bu-table"><thead><tr><th>Business Unit</th><th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>May</th><th>Jun</th><th>Jul</th><th>TOTAL</th></tr></thead><tbody><tr><td>AAS - Air Labs</td><td>152</td><td>101</td><td>72</td><td>91</td><td>72</td><td>53</td><td>76</td><td>617</td></tr>
+<tr><td>ACS - Continuous Emissions Mont</td><td>1,021</td><td>223</td><td>180</td><td>227</td><td>324</td><td>306</td><td>97</td><td>2,378</td></tr>
+<tr><td>AEL - Environmental Labs</td><td>453</td><td>386</td><td>513</td><td>378</td><td>418</td><td>805</td><td>458</td><td>3,411</td></tr>
+<tr><td>AEM - Leak Detection Services</td><td>2,607</td><td>904</td><td>857</td><td>1,182</td><td>2,456</td><td>3,044</td><td>1,510</td><td>12,560</td></tr>
+<tr><td>AQM - Ambient Air Monitoring</td><td>34</td><td>22</td><td>8</td><td>4</td><td>25</td><td>23</td><td>13</td><td>129</td></tr>
+<tr><td>ARE - Engineering</td><td>4</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>4</td></tr>
+<tr><td>ARR - Remediation</td><td>12</td><td>2</td><td>1</td><td>2</td><td>4</td><td>24</td><td>11</td><td>56</td></tr>
+<tr><td>ARS - Due Diligence</td><td>12</td><td>8</td><td>1</td><td>3</td><td>1</td><td>2</td><td>2</td><td>29</td></tr>
+<tr><td>AST - Stack Testing</td><td>1,486</td><td>721</td><td>1,251</td><td>1,618</td><td>1,785</td><td>1,445</td><td>1,477</td><td>9,783</td></tr>
+<tr><td>ATG - Alliance Technical Group</td><td>183</td><td>221</td><td>174</td><td>86</td><td>168</td><td>230</td><td>116</td><td>1,178</td></tr>
+<tr><td>ATS - Leak Detection Software</td><td>4</td><td>17</td><td>27</td><td>11</td><td>17</td><td>4</td><td>6</td><td>86</td></tr>
+<tr><td>DAS - Data Acquisition System</td><td>121</td><td>223</td><td>239</td><td>65</td><td>53</td><td>184</td><td>43</td><td>928</td></tr>
+<tr><td>EAC - Air Consulting</td><td>16</td><td>32</td><td>19</td><td>6</td><td>24</td><td>35</td><td>8</td><td>140</td></tr>
+<tr><td>ECG - Combustion Group</td><td>178</td><td>64</td><td>76</td><td>255</td><td>75</td><td>117</td><td>95</td><td>860</td></tr>
+<tr><td>EHS - EH & S Compliance</td><td>45</td><td>33</td><td>22</td><td>35</td><td>29</td><td>64</td><td>28</td><td>256</td></tr>
+<tr><td>OGL - Oil & Gas Labs</td><td>27</td><td>96</td><td>84</td><td>7</td><td>3</td><td>4</td><td>3</td><td>224</td></tr>
+<tr><td>TEM - Temp CEMS</td><td>7</td><td>101</td><td>63</td><td>12</td><td>3</td><td>24</td><td>0</td><td>210</td></tr>
+<tr><td>WNR - Water & NR Consulting</td><td>9</td><td>6</td><td>26</td><td>16</td><td>30</td><td>9</td><td>6</td><td>102</td></tr>
+<tr class="total"><td>TOTAL</td><td>6,371</td><td>3,160</td><td>3,613</td><td>3,998</td><td>5,487</td><td>6,373</td><td>3,949</td><td>32,951</td></tr>
+</tbody></table></div>
+    <div>
+      <div class="card" style="margin-bottom:16px;">
+        <h3>Top 8 Business Units by Learning Activities (YTD)</h3>
+        <div class="chart-box" style="height:230px;"><canvas id="ccb_topBar"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Monthly Total — Learning Activities</h3>
+        <div class="chart-box" style="height:230px;"><canvas id="ccb_trendLine"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <p class="footnote">Includes all completions/attendances regardless of whether a duration value was captured, so activity counts can exceed what the hours totals would imply.</p>
+</section>
+
+<section class="page-section" id="counts-by-bu-courses">
+  <h2 class="section-title">Online Course Completions by Business Unit</h2>
+  <p class="section-sub">Online course completions only, by business unit | Jan – Jul 2026</p>
+  <div class="two-col">
+    <div class="card"><table class="bu-table"><thead><tr><th>Business Unit</th><th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>May</th><th>Jun</th><th>Jul</th><th>TOTAL</th></tr></thead><tbody><tr><td>AAS - Air Labs</td><td>150</td><td>91</td><td>71</td><td>78</td><td>66</td><td>45</td><td>76</td><td>577</td></tr>
+<tr><td>ACS - Continuous Emissions Mont</td><td>1,019</td><td>212</td><td>167</td><td>201</td><td>311</td><td>285</td><td>95</td><td>2,290</td></tr>
+<tr><td>AEL - Environmental Labs</td><td>449</td><td>383</td><td>499</td><td>357</td><td>401</td><td>769</td><td>449</td><td>3,307</td></tr>
+<tr><td>AEM - Leak Detection Services</td><td>2,585</td><td>884</td><td>829</td><td>1,120</td><td>2,444</td><td>2,991</td><td>1,492</td><td>12,345</td></tr>
+<tr><td>AQM - Ambient Air Monitoring</td><td>34</td><td>22</td><td>8</td><td>4</td><td>25</td><td>22</td><td>13</td><td>128</td></tr>
+<tr><td>ARE - Engineering</td><td>4</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>4</td></tr>
+<tr><td>ARR - Remediation</td><td>11</td><td>2</td><td>1</td><td>1</td><td>4</td><td>22</td><td>11</td><td>52</td></tr>
+<tr><td>ARS - Due Diligence</td><td>11</td><td>8</td><td>1</td><td>3</td><td>1</td><td>2</td><td>2</td><td>28</td></tr>
+<tr><td>AST - Stack Testing</td><td>1,420</td><td>631</td><td>1,203</td><td>1,596</td><td>1,757</td><td>1,391</td><td>1,467</td><td>9,465</td></tr>
+<tr><td>ATG - Alliance Technical Group</td><td>166</td><td>213</td><td>162</td><td>66</td><td>160</td><td>211</td><td>113</td><td>1,091</td></tr>
+<tr><td>ATS - Leak Detection Software</td><td>3</td><td>17</td><td>23</td><td>11</td><td>17</td><td>3</td><td>6</td><td>80</td></tr>
+<tr><td>DAS - Data Acquisition System</td><td>112</td><td>216</td><td>229</td><td>58</td><td>52</td><td>164</td><td>43</td><td>874</td></tr>
+<tr><td>EAC - Air Consulting</td><td>13</td><td>29</td><td>18</td><td>3</td><td>21</td><td>33</td><td>8</td><td>125</td></tr>
+<tr><td>ECG - Combustion Group</td><td>173</td><td>62</td><td>72</td><td>249</td><td>73</td><td>115</td><td>91</td><td>835</td></tr>
+<tr><td>EHS - EH & S Compliance</td><td>39</td><td>32</td><td>21</td><td>32</td><td>27</td><td>60</td><td>28</td><td>239</td></tr>
+<tr><td>OGL - Oil & Gas Labs</td><td>27</td><td>96</td><td>84</td><td>7</td><td>3</td><td>4</td><td>3</td><td>224</td></tr>
+<tr><td>TEM - Temp CEMS</td><td>7</td><td>96</td><td>63</td><td>12</td><td>3</td><td>23</td><td>0</td><td>204</td></tr>
+<tr><td>WNR - Water & NR Consulting</td><td>9</td><td>6</td><td>23</td><td>16</td><td>29</td><td>9</td><td>6</td><td>98</td></tr>
+<tr class="total"><td>TOTAL</td><td>6,232</td><td>3,000</td><td>3,474</td><td>3,814</td><td>5,394</td><td>6,149</td><td>3,903</td><td>31,966</td></tr>
+</tbody></table></div>
+    <div>
+      <div class="card" style="margin-bottom:16px;">
+        <h3>Top 8 Business Units by Course Completions (YTD)</h3>
+        <div class="chart-box" style="height:230px;"><canvas id="ccc_topBar"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Monthly Total — Course Completions</h3>
+        <div class="chart-box" style="height:230px;"><canvas id="ccc_trendLine"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <p class="footnote">Excludes in-class events; see &ldquo;Counts by BU (Events)&rdquo; for in-class attendance.</p>
+</section>
+
+<section class="page-section" id="counts-by-bu-events">
+  <h2 class="section-title">In-Class Event Attendance by Business Unit</h2>
+  <p class="section-sub">In-class event attendance (Attended = Yes only), by business unit | Jan – Jul 2026</p>
+  <div class="two-col">
+    <div class="card"><table class="bu-table"><thead><tr><th>Business Unit</th><th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>May</th><th>Jun</th><th>Jul</th><th>TOTAL</th></tr></thead><tbody><tr><td>AAS - Air Labs</td><td>2</td><td>10</td><td>1</td><td>13</td><td>6</td><td>8</td><td>0</td><td>40</td></tr>
+<tr><td>ACS - Continuous Emissions Mont</td><td>2</td><td>11</td><td>13</td><td>26</td><td>13</td><td>21</td><td>2</td><td>88</td></tr>
+<tr><td>AEL - Environmental Labs</td><td>4</td><td>3</td><td>14</td><td>21</td><td>17</td><td>36</td><td>9</td><td>104</td></tr>
+<tr><td>AEM - Leak Detection Services</td><td>22</td><td>20</td><td>28</td><td>62</td><td>12</td><td>53</td><td>18</td><td>215</td></tr>
+<tr><td>AQM - Ambient Air Monitoring</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td><td>0</td><td>1</td></tr>
+<tr><td>ARE - Engineering</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+<tr><td>ARR - Remediation</td><td>1</td><td>0</td><td>0</td><td>1</td><td>0</td><td>2</td><td>0</td><td>4</td></tr>
+<tr><td>ARS - Due Diligence</td><td>1</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td></tr>
+<tr><td>AST - Stack Testing</td><td>66</td><td>90</td><td>48</td><td>22</td><td>28</td><td>54</td><td>10</td><td>318</td></tr>
+<tr><td>ATG - Alliance Technical Group</td><td>17</td><td>8</td><td>12</td><td>20</td><td>8</td><td>19</td><td>3</td><td>87</td></tr>
+<tr><td>ATS - Leak Detection Software</td><td>1</td><td>0</td><td>4</td><td>0</td><td>0</td><td>1</td><td>0</td><td>6</td></tr>
+<tr><td>DAS - Data Acquisition System</td><td>9</td><td>7</td><td>10</td><td>7</td><td>1</td><td>20</td><td>0</td><td>54</td></tr>
+<tr><td>EAC - Air Consulting</td><td>3</td><td>3</td><td>1</td><td>3</td><td>3</td><td>2</td><td>0</td><td>15</td></tr>
+<tr><td>ECG - Combustion Group</td><td>5</td><td>2</td><td>4</td><td>6</td><td>2</td><td>2</td><td>4</td><td>25</td></tr>
+<tr><td>EHS - EH & S Compliance</td><td>6</td><td>1</td><td>1</td><td>3</td><td>2</td><td>4</td><td>0</td><td>17</td></tr>
+<tr><td>OGL - Oil & Gas Labs</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+<tr><td>TEM - Temp CEMS</td><td>0</td><td>5</td><td>0</td><td>0</td><td>0</td><td>1</td><td>0</td><td>6</td></tr>
+<tr><td>WNR - Water & NR Consulting</td><td>0</td><td>0</td><td>3</td><td>0</td><td>1</td><td>0</td><td>0</td><td>4</td></tr>
+<tr class="total"><td>TOTAL</td><td>139</td><td>160</td><td>139</td><td>184</td><td>93</td><td>224</td><td>46</td><td>985</td></tr>
+</tbody></table></div>
+    <div>
+      <div class="card" style="margin-bottom:16px;">
+        <h3>Top 8 Business Units by Event Attendance (YTD)</h3>
+        <div class="chart-box" style="height:230px;"><canvas id="cce_topBar"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Monthly Total — Event Attendance</h3>
+        <div class="chart-box" style="height:230px;"><canvas id="cce_trendLine"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <p class="footnote">Attendance records where the source export marks &ldquo;Attended = Yes&rdquo; only.</p>
+</section>
+
+<section class="page-section" id="internal-vs-external">
+  <h2 class="section-title">Internal vs. External Learning Activity</h2>
+  <p class="section-sub">Monthly split of internal vs. external learning activity, Jan – Jul 2026</p>
+  <div class="card">
+    <table class="bu-table"><thead><tr><th>Month</th><th>Internal Courses</th><th>External Courses</th><th>Events (Internal)</th><th>Internal Total</th><th>External Total</th><th>Grand Total</th></tr></thead>
+    <tbody><tr><td>Jan-26</td><td>4,462</td><td>1,770</td><td>139</td><td>4,601</td><td>1,770</td><td>6,371</td></tr>
+<tr><td>Feb-26</td><td>1,997</td><td>1,003</td><td>160</td><td>2,157</td><td>1,003</td><td>3,160</td></tr>
+<tr><td>Mar-26</td><td>2,303</td><td>1,171</td><td>139</td><td>2,442</td><td>1,171</td><td>3,613</td></tr>
+<tr><td>Apr-26</td><td>2,789</td><td>1,025</td><td>184</td><td>2,973</td><td>1,025</td><td>3,998</td></tr>
+<tr><td>May-26</td><td>3,869</td><td>1,525</td><td>93</td><td>3,962</td><td>1,525</td><td>5,487</td></tr>
+<tr><td>Jun-26</td><td>4,597</td><td>1,552</td><td>224</td><td>4,821</td><td>1,552</td><td>6,373</td></tr>
+<tr><td>Jul-26</td><td>3,026</td><td>877</td><td>46</td><td>3,072</td><td>877</td><td>3,949</td></tr>
+<tr class="total"><td>TOTAL</td><td>23,043</td><td>8,923</td><td>985</td><td>24,028</td><td>8,923</td><td>32,951</td></tr>
+</tbody></table>
+  </div>
+  <div class="chart-row" style="margin-top:16px;">
+    <div class="card"><h3>Internal vs. External Learning Activity — Monthly</h3>
+      <div class="chart-box" style="height:280px;"><canvas id="ive_bar"></canvas></div></div>
+    <div class="card"><h3>Internal vs. External Share — YTD</h3>
+      <div class="chart-box" style="height:280px;"><canvas id="ive_pie"></canvas></div></div>
+  </div>
+  <p class="footnote">All in-class events are classified as Internal. External = courses flagged &ldquo;Course Is External = True.&rdquo; Business-unit detail is provided below in &ldquo;Internal Counts by BU&rdquo; and &ldquo;External Counts by BU.&rdquo;</p>
+</section>
+
+<section class="page-section" id="internal-counts-by-bu">
+  <h2 class="section-title">Internal Learning Activity by Business Unit</h2>
+  <p class="section-sub">Internal courses + in-class events, by business unit | Jan – Jul 2026</p>
+  <div class="two-col">
+    <div class="card"><table class="bu-table"><thead><tr><th>Business Unit</th><th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>May</th><th>Jun</th><th>Jul</th><th>TOTAL</th></tr></thead><tbody><tr><td>AAS - Air Labs</td><td>121</td><td>50</td><td>27</td><td>48</td><td>43</td><td>47</td><td>59</td><td>395</td></tr>
+<tr><td>ACS - Continuous Emissions Mont</td><td>212</td><td>127</td><td>82</td><td>170</td><td>218</td><td>207</td><td>52</td><td>1,068</td></tr>
+<tr><td>AEL - Environmental Labs</td><td>349</td><td>287</td><td>309</td><td>287</td><td>236</td><td>524</td><td>348</td><td>2,340</td></tr>
+<tr><td>AEM - Leak Detection Services</td><td>2,237</td><td>561</td><td>523</td><td>759</td><td>1,769</td><td>2,302</td><td>1,109</td><td>9,260</td></tr>
+<tr><td>AQM - Ambient Air Monitoring</td><td>7</td><td>16</td><td>8</td><td>4</td><td>11</td><td>16</td><td>4</td><td>66</td></tr>
+<tr><td>ARE - Engineering</td><td>1</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td></tr>
+<tr><td>ARR - Remediation</td><td>12</td><td>2</td><td>1</td><td>2</td><td>4</td><td>16</td><td>7</td><td>44</td></tr>
+<tr><td>ARS - Due Diligence</td><td>12</td><td>6</td><td>1</td><td>0</td><td>1</td><td>2</td><td>2</td><td>24</td></tr>
+<tr><td>AST - Stack Testing</td><td>1,214</td><td>520</td><td>913</td><td>1,340</td><td>1,368</td><td>1,180</td><td>1,262</td><td>7,797</td></tr>
+<tr><td>ATG - Alliance Technical Group</td><td>166</td><td>174</td><td>115</td><td>77</td><td>132</td><td>195</td><td>79</td><td>938</td></tr>
+<tr><td>ATS - Leak Detection Software</td><td>4</td><td>17</td><td>25</td><td>9</td><td>15</td><td>4</td><td>6</td><td>80</td></tr>
+<tr><td>DAS - Data Acquisition System</td><td>81</td><td>196</td><td>217</td><td>65</td><td>50</td><td>151</td><td>41</td><td>801</td></tr>
+<tr><td>EAC - Air Consulting</td><td>5</td><td>18</td><td>15</td><td>6</td><td>19</td><td>24</td><td>8</td><td>95</td></tr>
+<tr><td>ECG - Combustion Group</td><td>142</td><td>50</td><td>52</td><td>156</td><td>57</td><td>83</td><td>68</td><td>608</td></tr>
+<tr><td>EHS - EH & S Compliance</td><td>19</td><td>15</td><td>14</td><td>23</td><td>18</td><td>43</td><td>18</td><td>150</td></tr>
+<tr><td>OGL - Oil & Gas Labs</td><td>5</td><td>31</td><td>55</td><td>4</td><td>3</td><td>4</td><td>3</td><td>105</td></tr>
+<tr><td>TEM - Temp CEMS</td><td>7</td><td>81</td><td>63</td><td>12</td><td>3</td><td>14</td><td>0</td><td>180</td></tr>
+<tr><td>WNR - Water & NR Consulting</td><td>7</td><td>6</td><td>22</td><td>11</td><td>15</td><td>9</td><td>6</td><td>76</td></tr>
+<tr class="total"><td>TOTAL</td><td>4,601</td><td>2,157</td><td>2,442</td><td>2,973</td><td>3,962</td><td>4,821</td><td>3,072</td><td>24,028</td></tr>
+</tbody></table></div>
+    <div>
+      <div class="card" style="margin-bottom:16px;">
+        <h3>Top 8 Business Units by Internal Activity (YTD)</h3>
+        <div class="chart-box" style="height:230px;"><canvas id="icb_topBar"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Monthly Total — Internal Activity</h3>
+        <div class="chart-box" style="height:230px;"><canvas id="icb_trendLine"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <p class="footnote">All in-class events are classified as Internal. Internal courses exclude any course flagged &ldquo;Course Is External = True.&rdquo;</p>
+</section>
+
+<section class="page-section" id="external-counts-by-bu">
+  <h2 class="section-title">External Course Completions by Business Unit</h2>
+  <p class="section-sub">Courses flagged &ldquo;Course Is External = True,&rdquo; by business unit | Jan – Jul 2026</p>
+  <div class="two-col">
+    <div class="card"><table class="bu-table"><thead><tr><th>Business Unit</th><th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>May</th><th>Jun</th><th>Jul</th><th>TOTAL</th></tr></thead><tbody><tr><td>AAS - Air Labs</td><td>31</td><td>51</td><td>45</td><td>43</td><td>29</td><td>6</td><td>17</td><td>222</td></tr>
+<tr><td>ACS - Continuous Emissions Mont</td><td>809</td><td>96</td><td>98</td><td>57</td><td>106</td><td>99</td><td>45</td><td>1,310</td></tr>
+<tr><td>AEL - Environmental Labs</td><td>104</td><td>99</td><td>204</td><td>91</td><td>182</td><td>281</td><td>110</td><td>1,071</td></tr>
+<tr><td>AEM - Leak Detection Services</td><td>370</td><td>343</td><td>334</td><td>423</td><td>687</td><td>742</td><td>401</td><td>3,300</td></tr>
+<tr><td>AQM - Ambient Air Monitoring</td><td>27</td><td>6</td><td>0</td><td>0</td><td>14</td><td>7</td><td>9</td><td>63</td></tr>
+<tr><td>ARE - Engineering</td><td>3</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>3</td></tr>
+<tr><td>ARR - Remediation</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>8</td><td>4</td><td>12</td></tr>
+<tr><td>ARS - Due Diligence</td><td>0</td><td>2</td><td>0</td><td>3</td><td>0</td><td>0</td><td>0</td><td>5</td></tr>
+<tr><td>AST - Stack Testing</td><td>272</td><td>201</td><td>338</td><td>278</td><td>417</td><td>265</td><td>215</td><td>1,986</td></tr>
+<tr><td>ATG - Alliance Technical Group</td><td>17</td><td>47</td><td>59</td><td>9</td><td>36</td><td>35</td><td>37</td><td>240</td></tr>
+<tr><td>ATS - Leak Detection Software</td><td>0</td><td>0</td><td>2</td><td>2</td><td>2</td><td>0</td><td>0</td><td>6</td></tr>
+<tr><td>DAS - Data Acquisition System</td><td>40</td><td>27</td><td>22</td><td>0</td><td>3</td><td>33</td><td>2</td><td>127</td></tr>
+<tr><td>EAC - Air Consulting</td><td>11</td><td>14</td><td>4</td><td>0</td><td>5</td><td>11</td><td>0</td><td>45</td></tr>
+<tr><td>ECG - Combustion Group</td><td>36</td><td>14</td><td>24</td><td>99</td><td>18</td><td>34</td><td>27</td><td>252</td></tr>
+<tr><td>EHS - EH & S Compliance</td><td>26</td><td>18</td><td>8</td><td>12</td><td>11</td><td>21</td><td>10</td><td>106</td></tr>
+<tr><td>OGL - Oil & Gas Labs</td><td>22</td><td>65</td><td>29</td><td>3</td><td>0</td><td>0</td><td>0</td><td>119</td></tr>
+<tr><td>TEM - Temp CEMS</td><td>0</td><td>20</td><td>0</td><td>0</td><td>0</td><td>10</td><td>0</td><td>30</td></tr>
+<tr><td>WNR - Water & NR Consulting</td><td>2</td><td>0</td><td>4</td><td>5</td><td>15</td><td>0</td><td>0</td><td>26</td></tr>
+<tr class="total"><td>TOTAL</td><td>1,770</td><td>1,003</td><td>1,171</td><td>1,025</td><td>1,525</td><td>1,552</td><td>877</td><td>8,923</td></tr>
+</tbody></table></div>
+    <div>
+      <div class="card" style="margin-bottom:16px;">
+        <h3>Top 8 Business Units by External Completions (YTD)</h3>
+        <div class="chart-box" style="height:230px;"><canvas id="ecb_topBar"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Monthly Total — External Completions</h3>
+        <div class="chart-box" style="height:230px;"><canvas id="ecb_trendLine"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <p class="footnote">External activity is course-only; there is no external in-class event category.</p>
+</section>
+
+<section class="page-section" id="course-intake">
+  <h2 class="section-title">Course Intake Report</h2>
+  <p class="section-sub">Alliance University | New &amp; updated courses, exported Jul 23, 2026</p>
+  <div class="two-col">
+    <div class="card">
+      <table class="bu-table" style="font-size:11px;">
+        <thead><tr><th style="text-align:left;">Course</th><th>Created</th><th>External</th><th>Last Update</th><th>Course Id</th><th style="text-align:left;">Business Unit</th></tr></thead>
+        <tbody>
+          <tr><td style="text-align:left;">AEL - GSP - 1540.0001_QUAM_925</td><td>2026-06-16</td><td>No</td><td>2026-06-16</td><td>13290310</td><td style="text-align:left;">AEL - Environmental Labs</td></tr>
+          <tr><td style="text-align:left;">AEL -RAP_SOP 200.8, 6020A&amp;B Revision 26.0</td><td>2026-07-02</td><td>No</td><td>2026-07-02</td><td>13375775</td><td style="text-align:left;">AEL - Environmental Labs</td></tr>
+          <tr><td style="text-align:left;">AEM - Enterprise Hobbs Site Operating Plan</td><td>2026-07-14</td><td>No</td><td>2026-07-14</td><td>13424425</td><td style="text-align:left;">AEM - Leak Detection Services</td></tr>
+          <tr><td style="text-align:left;">AEM - Enterprise Leonidas Site Operating Plan</td><td>2026-07-14</td><td>No</td><td>2026-07-14</td><td>13424478</td><td style="text-align:left;">AEM - Leak Detection Services</td></tr>
+          <tr><td style="text-align:left;">AEM - Enterprise St. Lucia Site Operating Plan</td><td>2026-07-14</td><td>No</td><td>2026-07-14</td><td>13424515</td><td style="text-align:left;">AEM - Leak Detection Services</td></tr>
+          <tr><td style="text-align:left;">AEM - Enterprise Taylor - Leiker Site Operating Plan</td><td>2026-07-14</td><td>No</td><td>2026-07-14</td><td>13424548</td><td style="text-align:left;">AEM - Leak Detection Services</td></tr>
+          <tr><td style="text-align:left;">AEM - Enterprise Trident &amp; Pose Site Operating Plan</td><td>2026-07-14</td><td>No</td><td>2026-07-14</td><td>13424604</td><td style="text-align:left;">AEM - Leak Detection Services</td></tr>
+          <tr><td style="text-align:left;">AEM - GTP LDAR Monitoring Plan</td><td>2026-07-23</td><td>No</td><td>2026-07-23</td><td>13461806</td><td style="text-align:left;">AEM - Leak Detection Services</td></tr>
+          <tr><td style="text-align:left;">AEM - OPGAL Certification Course</td><td>2026-06-26</td><td>No</td><td>2026-06-26</td><td>13346972</td><td style="text-align:left;">AEM - Leak Detection Services</td></tr>
+          <tr><td style="text-align:left;">AEM - Skybridge Calibrations for Admins</td><td>2026-06-03</td><td>No</td><td>2026-06-03</td><td>13173196</td><td style="text-align:left;">AEM - Leak Detection Services</td></tr>
+          <tr><td style="text-align:left;">AEM - SkyMobile Calibrations for Technicians</td><td>2026-06-03</td><td>No</td><td>2026-06-03</td><td>13173008</td><td style="text-align:left;">AEM - Leak Detection Services</td></tr>
+          <tr><td style="text-align:left;">AEM-PBF Torrance BWON Sampling Annual Training</td><td>2026-07-13</td><td>No</td><td>2026-07-13</td><td>13410839</td><td style="text-align:left;">AEM - Leak Detection Services</td></tr>
+          <tr><td style="text-align:left;">AST - 2026 Q2 SOP and Templates Updates</td><td>2026-06-30</td><td>No</td><td>2026-07-10</td><td>13364146</td><td style="text-align:left;">AST - Stack Testing</td></tr>
+          <tr><td style="text-align:left;">AST - QI Group 3 Workshop - 1 Day Event</td><td>2026-06-11</td><td>No</td><td>&mdash;</td><td>13270220</td><td style="text-align:left;">AST - Stack Testing</td></tr>
+          <tr><td style="text-align:left;">AST - Stack IQ - Chemistry 101 for Stack Testers</td><td>2026-07-21</td><td>No</td><td>&mdash;</td><td>13446817</td><td style="text-align:left;">AST - Stack Testing</td></tr>
+          <tr><td style="text-align:left;">AST - Stack IQ - Field PM Results Standardized Practices</td><td>2026-06-18</td><td>No</td><td>2026-07-01</td><td>13318435</td><td style="text-align:left;">AST - Stack Testing</td></tr>
+          <tr><td style="text-align:left;">AST-Golden Pass LNG MP33 and MP69 Compressor Stations Monitoring Plan Training Overview</td><td>2026-07-09</td><td>No</td><td>2026-07-15</td><td>13396472</td><td style="text-align:left;">AST - Stack Testing</td></tr>
+          <tr><td style="text-align:left;">ATG - Ascend Leadership Program - C6</td><td>2026-07-22</td><td>No</td><td>&mdash;</td><td>13453967</td><td style="text-align:left;">ATG - Alliance Technical Group</td></tr>
+          <tr><td style="text-align:left;">ATG - Box Onboarding</td><td>2026-06-05</td><td>No</td><td>2026-07-01</td><td>13190387</td><td style="text-align:left;">ATG - Alliance Technical Group</td></tr>
+          <tr><td style="text-align:left;">ATG - DAL Equipment Calibration SOP 300.004.26.0</td><td>2026-07-21</td><td>No</td><td>2026-07-21</td><td>13446316</td><td style="text-align:left;">ATG - Alliance Technical Group</td></tr>
+          <tr><td style="text-align:left;">ATG - Document Control Guidance Document 530.101</td><td>2026-07-21</td><td>No</td><td>2026-07-21</td><td>13446553</td><td style="text-align:left;">ATG - Alliance Technical Group</td></tr>
+          <tr><td style="text-align:left;">ATG - EEO Training for the State of Minnesota</td><td>2026-07-09</td><td>No</td><td>&mdash;</td><td>13396691</td><td style="text-align:left;">ATG - Alliance Technical Group</td></tr>
+          <tr><td style="text-align:left;">ACS - 012 - Networking and Basic Windows Troubleshooting</td><td>2026-07-20</td><td>No</td><td>2026-07-23</td><td>13443744</td><td style="text-align:left;">ACS - Continuous Emissions Mont</td></tr>
+          <tr style="background:#fce4d6;"><td style="text-align:left;">IDS- Administrator II Training Checklist</td><td>2026-06-23</td><td>No</td><td>&mdash;</td><td>13333265</td><td style="text-align:left;">IDS &#9888;</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <div class="card">
+        <h3>New Courses by Business Unit</h3>
+        <div class="chart-box" style="height:260px;"><canvas id="ci_topBar"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <p class="footnote">24 courses created or updated between Jun 3 – Jul 23, 2026. &ldquo;IDS&rdquo; (row highlighted) does not match any of the 18 standard business units and needs manual review — likely a new BU, or a naming variant that should be mapped to an existing one.</p>
+</section>
+
+<section class="page-section" id="ast">
+  <h2 class="section-title">AST — License / Certification Summary</h2>
+  <p class="section-sub">Currently valid certifications (Renewal Date &ge; Today), as of July 29, 2026</p>
+
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="kpi-head">TOTAL VALID CERTIFICATIONS</div>
+      <div class="kpi-number">152</div>
+      <div class="kpi-ytd" style="padding-top:10px;">Across 5 certification groups</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-head">EMPLOYEES CERTIFIED</div>
+      <div class="kpi-number">86</div>
+      <div class="kpi-ytd" style="padding-top:10px;">With at least 1 valid cert</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-head">MULTI-CERTIFIED EMPLOYEES</div>
+      <div class="kpi-number">38</div>
+      <div class="kpi-ytd" style="padding-top:10px;">Hold 2 or more certifications</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-head">ORG UNITS REPRESENTED</div>
+      <div class="kpi-number">3</div>
+      <div class="kpi-ytd" style="padding-top:10px;">Stack Testing, Temp CEMS, ATG</div>
+    </div>
+  </div>
+
+  <div class="section-header">VALID CERTIFICATIONS BY GROUP <a href="#pm-qi-status" style="color:#fff;font-weight:400;text-decoration:underline;font-size:11px;">PM Group QI status &darr;</a></div>
+  <div class="chart-row">
+    <div class="card"><h3>By Group, Stacked by Org Level 1</h3>
+      <div class="chart-box" style="height:280px;"><canvas id="ast_groupStackedByOrg"></canvas></div></div>
+    <div class="card"><h3>Employees by Number of Certifications Held</h3>
+      <div class="chart-box" style="height:280px;"><canvas id="ast_certCountBar"></canvas></div></div>
+  </div>
+
+  <div class="section-header">DETAIL</div>
+  <div class="card">
+    <table class="bu-table">
+      <thead><tr><th style="text-align:left;">Org Level 1</th><th>Group 1</th><th>Group 2</th><th>Group 3</th><th>Group 4</th><th>Group 5</th><th>Total</th></tr></thead>
+      <tbody>
+        <tr><td style="text-align:left;">Stack Testing</td><td>41</td><td>18</td><td>78</td><td>10</td><td>3</td><td>150</td></tr>
+        <tr><td style="text-align:left;">Temp CEMS</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td><td>1</td></tr>
+        <tr><td style="text-align:left;">Alliance Technical Group</td><td>0</td><td>0</td><td>1</td><td>0</td><td>0</td><td>1</td></tr>
+        <tr class="total"><td>TOTAL</td><td>41</td><td>18</td><td>79</td><td>10</td><td>4</td><td>152</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="footnote">Source: AST_Grp_1-5.xlsx. Valid certifications are rows where the renewal date is on or after today (July 29, 2026). Certification groups (Group 1–5) correspond to license/certification codes GRP1–GRP5. Employees-by-cert-count reflects distinct valid certification codes held per employee (86 employees have at least 1 valid certification).</p>
+
+  <div class="section-header" id="pm-qi-status">PROJECT MANAGER GROUP QI STATUS</div>
+  <p style="margin:0 0 8px;font-size:11px;color:var(--muted);">Click a column header to sort. Click again to reverse.</p>
+  <div class="card">
+    <div class="scroll-table">
+      <table class="bu-table" id="pmTable">
+        <thead><tr>
+          <th class="sortable" data-key="name" style="text-align:left;cursor:pointer;">Name <span class="sort-arrow"></span></th>
+          <th class="sortable" data-key="job" style="text-align:left;cursor:pointer;">Job Title <span class="sort-arrow"></span></th>
+          <th class="sortable" data-key="grp1" style="cursor:pointer;">Group 1 <span class="sort-arrow"></span></th>
+          <th class="sortable" data-key="grp2" style="cursor:pointer;">Group 2 <span class="sort-arrow"></span></th>
+          <th class="sortable" data-key="grp3" style="cursor:pointer;">Group 3 <span class="sort-arrow"></span></th>
+          <th class="sortable" data-key="grp4" style="cursor:pointer;">Group 4 <span class="sort-arrow"></span></th>
+          <th class="sortable" data-key="grp5" style="cursor:pointer;">Group 5 <span class="sort-arrow"></span></th>
+        </tr></thead>
+        <tbody id="pmTableBody">
+        <tr data-name="Aaron Lee" data-job="PMII - Project Manager II" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Aaron Lee</td><td style="text-align:left;">PMII - Project Manager II</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Alex Engeler" data-job="Head of Supervisor,PMII - Project Manager II" data-grp1="" data-grp2="" data-grp3="2027-01-07" data-grp4="" data-grp5=""><td style="text-align:left;">Alex Engeler</td><td style="text-align:left;">Head of Supervisor,PMII - Project Manager II</td><td>&mdash;</td><td>&mdash;</td><td>1/7/2027</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Antonio Anderson" data-job="PMI - Project Manager I" data-grp1="" data-grp2="" data-grp3="2029-10-05" data-grp4="" data-grp5=""><td style="text-align:left;">Antonio Anderson</td><td style="text-align:left;">PMI - Project Manager I</td><td>&mdash;</td><td>&mdash;</td><td>10/5/2029</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Archer Berzins" data-job="PMI - Project Manager I" data-grp1="2030-05-12" data-grp2="" data-grp3="2030-09-22" data-grp4="" data-grp5=""><td style="text-align:left;">Archer Berzins</td><td style="text-align:left;">PMI - Project Manager I</td><td>5/12/2030</td><td>&mdash;</td><td>9/22/2030</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Austin Deitz" data-job="PMI - Project Manager I" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Austin Deitz</td><td style="text-align:left;">PMI - Project Manager I</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Benjamin Murowchick" data-job="PMII - Project Manager II" data-grp1="2029-09-26" data-grp2="" data-grp3="2029-09-27" data-grp4="" data-grp5=""><td style="text-align:left;">Benjamin Murowchick</td><td style="text-align:left;">PMII - Project Manager II</td><td>9/26/2029</td><td>&mdash;</td><td>9/27/2029</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Blair Butcher" data-job="CPMII - Project Manager II" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Blair Butcher</td><td style="text-align:left;">CPMII - Project Manager II</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Brian Cox" data-job="PMI - Project Manager I" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Brian Cox</td><td style="text-align:left;">PMI - Project Manager I</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Caleb Moody" data-job="PMII - Project Manager II" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Caleb Moody</td><td style="text-align:left;">PMII - Project Manager II</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Carter Ballard" data-job="PMII - Project Manager II" data-grp1="" data-grp2="" data-grp3="2029-12-06" data-grp4="" data-grp5=""><td style="text-align:left;">Carter Ballard</td><td style="text-align:left;">PMII - Project Manager II</td><td>&mdash;</td><td>&mdash;</td><td>12/6/2029</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Charles Santoro" data-job="PMI - Project Manager I" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Charles Santoro</td><td style="text-align:left;">PMI - Project Manager I</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Chris Warneke" data-job="PMIII - Project Manager III" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Chris Warneke</td><td style="text-align:left;">PMIII - Project Manager III</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Christopher Gray" data-job="PMIII - Project Manager III" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Christopher Gray</td><td style="text-align:left;">PMIII - Project Manager III</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Christopher Marquardt" data-job="PMII - Project Manager II" data-grp1="" data-grp2="" data-grp3="2030-06-13" data-grp4="" data-grp5=""><td style="text-align:left;">Christopher Marquardt</td><td style="text-align:left;">PMII - Project Manager II</td><td>&mdash;</td><td>&mdash;</td><td>6/13/2030</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Colin Kelly" data-job="PMI - Project Manager I" data-grp1="" data-grp2="" data-grp3="2029-10-04" data-grp4="" data-grp5=""><td style="text-align:left;">Colin Kelly</td><td style="text-align:left;">PMI - Project Manager I</td><td>&mdash;</td><td>&mdash;</td><td>10/4/2029</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Connor Nelson" data-job="PMI - Project Manager I" data-grp1="" data-grp2="" data-grp3="2031-03-31" data-grp4="" data-grp5=""><td style="text-align:left;">Connor Nelson</td><td style="text-align:left;">PMI - Project Manager I</td><td>&mdash;</td><td>&mdash;</td><td>3/31/2031</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Curtis Berridge" data-job="PMI - Project Manager I" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Curtis Berridge</td><td style="text-align:left;">PMI - Project Manager I</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Daniel Turton" data-job="CPMIII - Project Manager III CN" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Daniel Turton</td><td style="text-align:left;">CPMIII - Project Manager III CN</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Daryl Zander" data-job="CSPM - Sr Project Manager I CN" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Daryl Zander</td><td style="text-align:left;">CSPM - Sr Project Manager I CN</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="David Rouse" data-job="PMIII - Project Manager III" data-grp1="2029-12-05" data-grp2="" data-grp3="2028-02-08" data-grp4="" data-grp5=""><td style="text-align:left;">David Rouse</td><td style="text-align:left;">PMIII - Project Manager III</td><td>12/5/2029</td><td>&mdash;</td><td>2/8/2028</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Derek Toy" data-job="PMI - Project Manager I" data-grp1="" data-grp2="" data-grp3="2030-06-13" data-grp4="" data-grp5=""><td style="text-align:left;">Derek Toy</td><td style="text-align:left;">PMI - Project Manager I</td><td>&mdash;</td><td>&mdash;</td><td>6/13/2030</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Devin Anderson" data-job="CPMI - Project Manager I CN" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Devin Anderson</td><td style="text-align:left;">CPMI - Project Manager I CN</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Emilio Niglio" data-job="PMIII - Project Manager III" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Emilio Niglio</td><td style="text-align:left;">PMIII - Project Manager III</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Eric Tempest" data-job="PMII - Project Manager II" data-grp1="" data-grp2="" data-grp3="2029-09-19" data-grp4="" data-grp5=""><td style="text-align:left;">Eric Tempest</td><td style="text-align:left;">PMII - Project Manager II</td><td>&mdash;</td><td>&mdash;</td><td>9/19/2029</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Ernest Kanyeta" data-job="PMII - Project Manager II" data-grp1="2030-03-17" data-grp2="" data-grp3="2030-07-27" data-grp4="" data-grp5=""><td style="text-align:left;">Ernest Kanyeta</td><td style="text-align:left;">PMII - Project Manager II</td><td>3/17/2030</td><td>&mdash;</td><td>7/27/2030</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Ethan Sperfslage" data-job="PMIII - Project Manager III" data-grp1="2031-03-17" data-grp2="2031-04-01" data-grp3="2027-01-28" data-grp4="" data-grp5=""><td style="text-align:left;">Ethan Sperfslage</td><td style="text-align:left;">PMIII - Project Manager III</td><td>3/17/2031</td><td>4/1/2031</td><td>1/28/2027</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Evan Robins" data-job="PMII - Project Manager II" data-grp1="2028-04-18" data-grp2="2028-12-21" data-grp3="2028-06-08" data-grp4="2028-12-21" data-grp5=""><td style="text-align:left;">Evan Robins</td><td style="text-align:left;">PMII - Project Manager II</td><td>4/18/2028</td><td>12/21/2028</td><td>6/8/2028</td><td>12/21/2028</td><td>&mdash;</td></tr>
+        <tr data-name="Frederick Sanguedolce" data-job="PMIII - Project Manager III" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Frederick Sanguedolce</td><td style="text-align:left;">PMIII - Project Manager III</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Glen Farrell" data-job="PMI - Project Manager I" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Glen Farrell</td><td style="text-align:left;">PMI - Project Manager I</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Gwen Larru" data-job="PMIII - Project Manager III" data-grp1="2027-02-15" data-grp2="2030-12-09" data-grp3="2027-10-28" data-grp4="" data-grp5=""><td style="text-align:left;">Gwen Larru</td><td style="text-align:left;">PMIII - Project Manager III</td><td>2/15/2027</td><td>12/9/2030</td><td>10/28/2027</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Holden Blackwell" data-job="PMII - Project Manager II" data-grp1="" data-grp2="" data-grp3="2028-09-08" data-grp4="" data-grp5=""><td style="text-align:left;">Holden Blackwell</td><td style="text-align:left;">PMII - Project Manager II</td><td>&mdash;</td><td>&mdash;</td><td>9/8/2028</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Ian Briscoe" data-job="PMI - Project Manager I" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Ian Briscoe</td><td style="text-align:left;">PMI - Project Manager I</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Jacob Hand" data-job="PMI - Project Manager I" data-grp1="" data-grp2="" data-grp3="2030-02-14" data-grp4="" data-grp5=""><td style="text-align:left;">Jacob Hand</td><td style="text-align:left;">PMI - Project Manager I</td><td>&mdash;</td><td>&mdash;</td><td>2/14/2030</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="James Berry" data-job="PMI - Project Manager I" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">James Berry</td><td style="text-align:left;">PMI - Project Manager I</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Jared Manuel" data-job="PMIII - Project Manager III" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Jared Manuel</td><td style="text-align:left;">PMIII - Project Manager III</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Jason Grollman" data-job="CPMIII - Project Manager III CN" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Jason Grollman</td><td style="text-align:left;">CPMIII - Project Manager III CN</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Jerrit Hall" data-job="PMII - Project Manager II" data-grp1="2029-11-13" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Jerrit Hall</td><td style="text-align:left;">PMII - Project Manager II</td><td>11/13/2029</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="John Galbraith" data-job="PMI - Project Manager I" data-grp1="2029-04-03" data-grp2="" data-grp3="2029-09-18" data-grp4="" data-grp5=""><td style="text-align:left;">John Galbraith</td><td style="text-align:left;">PMI - Project Manager I</td><td>4/3/2029</td><td>&mdash;</td><td>9/18/2029</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="John O'Keefe" data-job="PMI - Project Manager I" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">John O'Keefe</td><td style="text-align:left;">PMI - Project Manager I</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Jonathan Evans" data-job="PMI - Project Manager I" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Jonathan Evans</td><td style="text-align:left;">PMI - Project Manager I</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Joshua Moore" data-job="PMII - Project Manager II" data-grp1="2031-03-25" data-grp2="" data-grp3="2029-03-01" data-grp4="" data-grp5=""><td style="text-align:left;">Joshua Moore</td><td style="text-align:left;">PMII - Project Manager II</td><td>3/25/2031</td><td>&mdash;</td><td>3/1/2029</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Julian Moore" data-job="PMI - Project Manager I" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Julian Moore</td><td style="text-align:left;">PMI - Project Manager I</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Justin Bernard" data-job="PMII - Project Manager II" data-grp1="" data-grp2="" data-grp3="2029-11-22" data-grp4="" data-grp5=""><td style="text-align:left;">Justin Bernard</td><td style="text-align:left;">PMII - Project Manager II</td><td>&mdash;</td><td>&mdash;</td><td>11/22/2029</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Kenny Franco" data-job="PMII - Project Manager II" data-grp1="" data-grp2="" data-grp3="2028-06-02" data-grp4="" data-grp5=""><td style="text-align:left;">Kenny Franco</td><td style="text-align:left;">PMII - Project Manager II</td><td>&mdash;</td><td>&mdash;</td><td>6/2/2028</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Kevin Smith" data-job="CSPM - Sr Project Manager I CN" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Kevin Smith</td><td style="text-align:left;">CSPM - Sr Project Manager I CN</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Kurtis Kinter" data-job="PMIII - Project Manager III" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Kurtis Kinter</td><td style="text-align:left;">PMIII - Project Manager III</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Lalan Kirby" data-job="PMI - Project Manager I" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Lalan Kirby</td><td style="text-align:left;">PMI - Project Manager I</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Lauren Thomassie" data-job="PMII - Project Manager II" data-grp1="2029-05-03" data-grp2="2029-07-07" data-grp3="2028-09-09" data-grp4="2029-08-11" data-grp5=""><td style="text-align:left;">Lauren Thomassie</td><td style="text-align:left;">PMII - Project Manager II</td><td>5/3/2029</td><td>7/7/2029</td><td>9/9/2028</td><td>8/11/2029</td><td>&mdash;</td></tr>
+        <tr data-name="Lawrence Reininger" data-job="CSPM - Sr Project Manager I CN" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Lawrence Reininger</td><td style="text-align:left;">CSPM - Sr Project Manager I CN</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Lisa Boyle" data-job="PMII - Project Manager II" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Lisa Boyle</td><td style="text-align:left;">PMII - Project Manager II</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Mansur Mohamed" data-job="PMIII - Project Manager III" data-grp1="" data-grp2="2030-11-09" data-grp3="2029-01-26" data-grp4="" data-grp5=""><td style="text-align:left;">Mansur Mohamed</td><td style="text-align:left;">PMIII - Project Manager III</td><td>&mdash;</td><td>11/9/2030</td><td>1/26/2029</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Mark Rowlett" data-job="PMI - Project Manager I" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Mark Rowlett</td><td style="text-align:left;">PMI - Project Manager I</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Matthew Pellham" data-job="PMII - Project Manager II" data-grp1="" data-grp2="" data-grp3="2027-01-07" data-grp4="" data-grp5=""><td style="text-align:left;">Matthew Pellham</td><td style="text-align:left;">PMII - Project Manager II</td><td>&mdash;</td><td>&mdash;</td><td>1/7/2027</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Michael Eplion" data-job="PMI - Project Manager I" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Michael Eplion</td><td style="text-align:left;">PMI - Project Manager I</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Michael McDaniel" data-job="PMIII - Project Manager III" data-grp1="2029-08-22" data-grp2="2029-11-13" data-grp3="2028-10-17" data-grp4="" data-grp5=""><td style="text-align:left;">Michael McDaniel</td><td style="text-align:left;">PMIII - Project Manager III</td><td>8/22/2029</td><td>11/13/2029</td><td>10/17/2028</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Michael Sepulveda" data-job="PMIII - Project Manager III" data-grp1="2029-08-22" data-grp2="2029-08-26" data-grp3="2029-08-22" data-grp4="2029-08-26" data-grp5=""><td style="text-align:left;">Michael Sepulveda</td><td style="text-align:left;">PMIII - Project Manager III</td><td>8/22/2029</td><td>8/26/2029</td><td>8/22/2029</td><td>8/26/2029</td><td>&mdash;</td></tr>
+        <tr data-name="Mitchell Manwaring" data-job="PMI - Project Manager I" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Mitchell Manwaring</td><td style="text-align:left;">PMI - Project Manager I</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Moritz Stuehn" data-job="PMI - Project Manager I" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Moritz Stuehn</td><td style="text-align:left;">PMI - Project Manager I</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Nicholas Haley" data-job="PMI - Project Manager I" data-grp1="" data-grp2="" data-grp3="2030-09-13" data-grp4="" data-grp5=""><td style="text-align:left;">Nicholas Haley</td><td style="text-align:left;">PMI - Project Manager I</td><td>&mdash;</td><td>&mdash;</td><td>9/13/2030</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Nicholas Johnson" data-job="PMI - Project Manager I" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Nicholas Johnson</td><td style="text-align:left;">PMI - Project Manager I</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Nick Pham" data-job="PMIII - Project Manager III" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Nick Pham</td><td style="text-align:left;">PMIII - Project Manager III</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Nolan Wright" data-job="PMI - Project Manager I" data-grp1="" data-grp2="" data-grp3="2030-01-31" data-grp4="" data-grp5=""><td style="text-align:left;">Nolan Wright</td><td style="text-align:left;">PMI - Project Manager I</td><td>&mdash;</td><td>&mdash;</td><td>1/31/2030</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Norton Geisler" data-job="PMIII - Project Manager III" data-grp1="" data-grp2="" data-grp3="2027-03-10" data-grp4="" data-grp5=""><td style="text-align:left;">Norton Geisler</td><td style="text-align:left;">PMIII - Project Manager III</td><td>&mdash;</td><td>&mdash;</td><td>3/10/2027</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Paul Mayo" data-job="PMII - Project Manager II" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Paul Mayo</td><td style="text-align:left;">PMII - Project Manager II</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Rashed Muhtaseb" data-job="PMI - Project Manager I" data-grp1="" data-grp2="" data-grp3="2030-02-15" data-grp4="" data-grp5=""><td style="text-align:left;">Rashed Muhtaseb</td><td style="text-align:left;">PMI - Project Manager I</td><td>&mdash;</td><td>&mdash;</td><td>2/15/2030</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Richard Delk" data-job="PMIII - Project Manager III" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Richard Delk</td><td style="text-align:left;">PMIII - Project Manager III</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Richard Oakes" data-job="PMII - Project Manager II" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Richard Oakes</td><td style="text-align:left;">PMII - Project Manager II</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Ryan Lenski" data-job="PMIII - Project Manager III" data-grp1="2027-03-09" data-grp2="" data-grp3="2027-04-15" data-grp4="" data-grp5=""><td style="text-align:left;">Ryan Lenski</td><td style="text-align:left;">PMIII - Project Manager III</td><td>3/9/2027</td><td>&mdash;</td><td>4/15/2027</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Ryan Lyons" data-job="PMIII - Project Manager III" data-grp1="2030-04-02" data-grp2="" data-grp3="2030-04-04" data-grp4="" data-grp5=""><td style="text-align:left;">Ryan Lyons</td><td style="text-align:left;">PMIII - Project Manager III</td><td>4/2/2030</td><td>&mdash;</td><td>4/4/2030</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Ryan Rosenstein" data-job="PMIII - Project Manager III" data-grp1="2027-06-04" data-grp2="" data-grp3="2027-08-26" data-grp4="" data-grp5=""><td style="text-align:left;">Ryan Rosenstein</td><td style="text-align:left;">PMIII - Project Manager III</td><td>6/4/2027</td><td>&mdash;</td><td>8/26/2027</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Ryan Schuth" data-job="PMIII - Project Manager III" data-grp1="2027-11-16" data-grp2="" data-grp3="2027-11-17" data-grp4="" data-grp5=""><td style="text-align:left;">Ryan Schuth</td><td style="text-align:left;">PMIII - Project Manager III</td><td>11/16/2027</td><td>&mdash;</td><td>11/17/2027</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Ryan Simon" data-job="PMII - Project Manager II" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5="2028-01-19"><td style="text-align:left;">Ryan Simon</td><td style="text-align:left;">PMII - Project Manager II</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>1/19/2028</td></tr>
+        <tr data-name="Samantha Waters" data-job="PMII - Project Manager II" data-grp1="2028-04-28" data-grp2="" data-grp3="2030-07-11" data-grp4="" data-grp5=""><td style="text-align:left;">Samantha Waters</td><td style="text-align:left;">PMII - Project Manager II</td><td>4/28/2028</td><td>&mdash;</td><td>7/11/2030</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Samuel Hines" data-job="PMII - Project Manager II" data-grp1="2031-03-31" data-grp2="" data-grp3="2028-08-11" data-grp4="" data-grp5=""><td style="text-align:left;">Samuel Hines</td><td style="text-align:left;">PMII - Project Manager II</td><td>3/31/2031</td><td>&mdash;</td><td>8/11/2028</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Sohail Bajwa" data-job="PMI - Project Manager I" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Sohail Bajwa</td><td style="text-align:left;">PMI - Project Manager I</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Stefan Schultz" data-job="PMII - Project Manager II" data-grp1="2031-04-12" data-grp2="" data-grp3="2030-06-08" data-grp4="" data-grp5=""><td style="text-align:left;">Stefan Schultz</td><td style="text-align:left;">PMII - Project Manager II</td><td>4/12/2031</td><td>&mdash;</td><td>6/8/2030</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Steven Broadbent" data-job="PMI - Project Manager I" data-grp1="" data-grp2="" data-grp3="2031-03-25" data-grp4="" data-grp5=""><td style="text-align:left;">Steven Broadbent</td><td style="text-align:left;">PMI - Project Manager I</td><td>&mdash;</td><td>&mdash;</td><td>3/25/2031</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Steven Teague" data-job="PMIII - Project Manager III" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Steven Teague</td><td style="text-align:left;">PMIII - Project Manager III</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Sydney Weaver" data-job="PMIII - Project Manager III" data-grp1="" data-grp2="2030-11-01" data-grp3="2029-01-31" data-grp4="" data-grp5=""><td style="text-align:left;">Sydney Weaver</td><td style="text-align:left;">PMIII - Project Manager III</td><td>&mdash;</td><td>11/1/2030</td><td>1/31/2029</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Taten Phillips" data-job="PMI - Project Manager I" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Taten Phillips</td><td style="text-align:left;">PMI - Project Manager I</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Ted LaBonte" data-job="PMI - Project Manager I" data-grp1="" data-grp2="" data-grp3="2029-08-29" data-grp4="" data-grp5=""><td style="text-align:left;">Ted LaBonte</td><td style="text-align:left;">PMI - Project Manager I</td><td>&mdash;</td><td>&mdash;</td><td>8/29/2029</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Thinh Tran" data-job="PMIII - Project Manager III" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Thinh Tran</td><td style="text-align:left;">PMIII - Project Manager III</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Thomas Timar" data-job="CPMIII - Project Manager III CN" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Thomas Timar</td><td style="text-align:left;">CPMIII - Project Manager III CN</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Tien Ta" data-job="PMII - Project Manager II" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Tien Ta</td><td style="text-align:left;">PMII - Project Manager II</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Tony Wells" data-job="PMI - Project Manager I" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Tony Wells</td><td style="text-align:left;">PMI - Project Manager I</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Travis Hebert" data-job="PMI - Project Manager I" data-grp1="" data-grp2="" data-grp3="" data-grp4="" data-grp5=""><td style="text-align:left;">Travis Hebert</td><td style="text-align:left;">PMI - Project Manager I</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        <tr data-name="Tyler Branca" data-job="PMII - Project Manager II" data-grp1="" data-grp2="" data-grp3="2028-12-12" data-grp4="" data-grp5=""><td style="text-align:left;">Tyler Branca</td><td style="text-align:left;">PMII - Project Manager II</td><td>&mdash;</td><td>&mdash;</td><td>12/12/2028</td><td>&mdash;</td><td>&mdash;</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <p class="footnote">Includes all 87 employees whose job title (per the AST QI members report) contains &ldquo;Project Manager.&rdquo; Each cell shows the renewal date of that employee&rsquo;s currently valid certification in that group; &ldquo;&mdash;&rdquo; indicates no currently valid certification in that group.</p>
+</section>
+
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const BLUE = '#214592'; const ORANGE='#dd6e0c'; const CHARCOAL='#444444'; const MUTED='#898781'; const GRID='#e1e0d9';
+Chart.defaults.font.family = "Arial, Helvetica, sans-serif";
+Chart.defaults.color = CHARCOAL;
+
+function sparkline(id, data, color){
+  new Chart(document.getElementById(id), {
+    type:'line',
+    data:{ labels:["Jan-26", "Feb-26", "Mar-26", "Apr-26", "May-26", "Jun-26", "Jul-26"], datasets:[{ data:data, borderColor:color, backgroundColor:'transparent',
+      borderWidth:2, pointRadius:3, pointBackgroundColor:color, tension:0 }]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}}, scales:{ x:{display:false}, y:{display:false} } }
+  });
+}
+sparkline('dash_spark1', [4295.8, 1962.5, 1902.6, 2266.4, 2278.8, 3034.9, 2052.4], BLUE);
+sparkline('dash_spark2', [6371, 3160, 3613, 3998, 5487, 6373, 3949], BLUE);
+sparkline('dash_spark3', [3903.8, 1189.5, 1661.1, 1971.9, 2057.3, 2527.9, 1983.4], BLUE);
+sparkline('dash_spark4', [392, 773, 241.5, 294.5, 221.5, 507, 69], BLUE);
+
+new Chart(document.getElementById('dash_monthlyBar'), {
+  type:'bar',
+  data:{ labels:["Jan-26", "Feb-26", "Mar-26", "Apr-26", "May-26", "Jun-26", "Jul-26"], datasets:[
+    {label:'Online Courses (hrs)', data:[3903.8, 1189.5, 1661.1, 1971.9, 2057.3, 2527.9, 1983.4], backgroundColor:BLUE, borderRadius:3},
+    {label:'In-Class Events (hrs)', data:[392, 773, 241.5, 294.5, 221.5, 507, 69], backgroundColor:ORANGE, borderRadius:3}
+  ]},
+  options:{ responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom',labels:{boxWidth:12}}},
+    scales:{ x:{stacked:true,grid:{display:false}}, y:{stacked:true,grid:{color:GRID},ticks:{color:MUTED}} } }
+});
+new Chart(document.getElementById('dash_deliveryPie'), {
+  type:'pie',
+  data:{ labels:['Online Courses','In-Class Events'], datasets:[{ data:[15294.900000000001,2498.5], backgroundColor:[BLUE,ORANGE] }]},
+  options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom',labels:{boxWidth:12}}} }
+});
+new Chart(document.getElementById('dash_intExtBar'), {
+  type:'bar',
+  data:{ labels:["Jan-26", "Feb-26", "Mar-26", "Apr-26", "May-26", "Jun-26", "Jul-26"], datasets:[
+    {label:'Internal', data:[4601, 2157, 2442, 2973, 3962, 4821, 3072], backgroundColor:BLUE, borderRadius:3},
+    {label:'External', data:[1770, 1003, 1171, 1025, 1525, 1552, 877], backgroundColor:ORANGE, borderRadius:3}
+  ]},
+  options:{ responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom',labels:{boxWidth:12}}},
+    scales:{ x:{stacked:true,grid:{display:false}}, y:{stacked:true,grid:{color:GRID},ticks:{color:MUTED}} } }
+});
+new Chart(document.getElementById('dash_intExtPie'), {
+  type:'pie',
+  data:{ labels:['Internal','External'], datasets:[{ data:[24028,8923], backgroundColor:[BLUE,ORANGE] }]},
+  options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom',labels:{boxWidth:12}}} }
+});
+new Chart(document.getElementById('dash_topHoursBar'), {
+  type:'bar',
+  data:{ labels:["AEM - Leak Detection Services", "AST - Stack Testing", "ACS - Continuous Emissions Mont", "AEL - Environmental Labs", "ATG - Alliance Technical Group", "ECG - Combustion Group", "AAS - Air Labs", "DAS - Data Acquisition System"], datasets:[{ data:[8241.7, 5098.1, 1108.9, 1108.3, 495.1, 459.4, 362.6, 342.6], backgroundColor:BLUE, borderRadius:3 }]},
+  options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+    scales:{ x:{grid:{color:GRID},ticks:{color:MUTED}}, y:{grid:{display:false}} } }
+});
+new Chart(document.getElementById('dash_topCountsBar'), {
+  type:'bar',
+  data:{ labels:["AEM - Leak Detection Services", "AST - Stack Testing", "AEL - Environmental Labs", "ACS - Continuous Emissions Mont", "ATG - Alliance Technical Group", "DAS - Data Acquisition System", "ECG - Combustion Group", "AAS - Air Labs"], datasets:[{ data:[12560, 9783, 3411, 2378, 1178, 928, 860, 617], backgroundColor:BLUE, borderRadius:3 }]},
+  options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+    scales:{ x:{grid:{color:GRID},ticks:{color:MUTED}}, y:{grid:{display:false}} } }
+});
+
+new Chart(document.getElementById('sum_monthlyBar'), {
+  type:'bar',
+  data:{ labels:["Jan-26", "Feb-26", "Mar-26", "Apr-26", "May-26", "Jun-26", "Jul-26"], datasets:[
+    {label:'Online Courses (hrs)', data:[3903.8, 1189.5, 1661.1, 1971.9, 2057.3, 2527.9, 1983.4], backgroundColor:BLUE, borderRadius:3},
+    {label:'In-Class Events (hrs)', data:[392, 773, 241.5, 294.5, 221.5, 507, 69], backgroundColor:ORANGE, borderRadius:3}
+  ]},
+  options:{ responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom',labels:{boxWidth:12}}},
+    scales:{ x:{stacked:true,grid:{display:false}}, y:{stacked:true,grid:{color:GRID},ticks:{color:MUTED}} } }
+});
+new Chart(document.getElementById('sum_deliveryPie'), {
+  type:'pie',
+  data:{ labels:['Online Courses','In-Class Events'], datasets:[{ data:[15294.900000000001,2498.5], backgroundColor:[BLUE,ORANGE] }]},
+  options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom',labels:{boxWidth:12}}} }
+});
+new Chart(document.getElementById('sum_activitiesLine'), {
+  type:'line',
+  data:{ labels:["Jan-26", "Feb-26", "Mar-26", "Apr-26", "May-26", "Jun-26", "Jul-26"], datasets:[{ data:[6371, 3160, 3613, 3998, 5487, 6373, 3949], borderColor:BLUE, backgroundColor:'transparent', borderWidth:2, pointRadius:4, pointBackgroundColor:BLUE, tension:0 }]},
+  options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+    scales:{ x:{grid:{display:false}}, y:{grid:{color:GRID},ticks:{color:MUTED}} } }
+});
+
+new Chart(document.getElementById('hbu_topBar'), {
+  type:'bar',
+  data:{ labels:["AEM - Leak Detection Services", "AST - Stack Testing", "ACS - Continuous Emissions Mont", "AEL - Environmental Labs", "ATG - Alliance Technical Group", "ECG - Combustion Group", "AAS - Air Labs", "DAS - Data Acquisition System"], datasets:[{ data:[8241.7, 5098.1, 1108.9, 1108.3, 495.1, 459.4, 362.6, 342.6], backgroundColor:BLUE, borderRadius:3 }]},
+  options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{ x:{grid:{color:GRID},ticks:{color:MUTED}}, y:{grid:{display:false},ticks:{font:{size:10}}} } }
+});
+new Chart(document.getElementById('hbu_trendLine'), {
+  type:'line',
+  data:{ labels:["Jan-26", "Feb-26", "Mar-26", "Apr-26", "May-26", "Jun-26", "Jul-26"], datasets:[{ data:[4296.0, 1962.3, 1902.6, 2266.5, 2278.7, 3034.8, 2052.5], borderColor:BLUE, backgroundColor:'transparent', borderWidth:2, pointRadius:4, pointBackgroundColor:BLUE, tension:0 }]},
+  options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+    scales:{ x:{grid:{display:false}}, y:{grid:{color:GRID},ticks:{color:MUTED}} } }
+});
+
+new Chart(document.getElementById('ccb_topBar'), {
+  type:'bar',
+  data:{ labels:["AEM - Leak Detection Services", "AST - Stack Testing", "AEL - Environmental Labs", "ACS - Continuous Emissions Mont", "ATG - Alliance Technical Group", "DAS - Data Acquisition System", "ECG - Combustion Group", "AAS - Air Labs"], datasets:[{ data:[12560, 9783, 3411, 2378, 1178, 928, 860, 617], backgroundColor:BLUE, borderRadius:3 }]},
+  options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{ x:{grid:{color:GRID},ticks:{color:MUTED}}, y:{grid:{display:false},ticks:{font:{size:10}}} } }
+});
+new Chart(document.getElementById('ccb_trendLine'), {
+  type:'line',
+  data:{ labels:["Jan-26", "Feb-26", "Mar-26", "Apr-26", "May-26", "Jun-26", "Jul-26"], datasets:[{ data:[6371, 3160, 3613, 3998, 5487, 6373, 3949], borderColor:BLUE, backgroundColor:'transparent', borderWidth:2, pointRadius:4, pointBackgroundColor:BLUE, tension:0 }]},
+  options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+    scales:{ x:{grid:{display:false}}, y:{grid:{color:GRID},ticks:{color:MUTED}} } }
+});
+
+new Chart(document.getElementById('ccc_topBar'), {
+  type:'bar',
+  data:{ labels:["AEM - Leak Detection Services", "AST - Stack Testing", "AEL - Environmental Labs", "ACS - Continuous Emissions Mont", "ATG - Alliance Technical Group", "DAS - Data Acquisition System", "ECG - Combustion Group", "AAS - Air Labs"], datasets:[{ data:[12345, 9465, 3307, 2290, 1091, 874, 835, 577], backgroundColor:BLUE, borderRadius:3 }]},
+  options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{ x:{grid:{color:GRID},ticks:{color:MUTED}}, y:{grid:{display:false},ticks:{font:{size:10}}} } }
+});
+new Chart(document.getElementById('ccc_trendLine'), {
+  type:'line',
+  data:{ labels:["Jan-26", "Feb-26", "Mar-26", "Apr-26", "May-26", "Jun-26", "Jul-26"], datasets:[{ data:[6232, 3000, 3474, 3814, 5394, 6149, 3903], borderColor:BLUE, backgroundColor:'transparent', borderWidth:2, pointRadius:4, pointBackgroundColor:BLUE, tension:0 }]},
+  options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+    scales:{ x:{grid:{display:false}}, y:{grid:{color:GRID},ticks:{color:MUTED}} } }
+});
+
+new Chart(document.getElementById('cce_topBar'), {
+  type:'bar',
+  data:{ labels:["AST - Stack Testing", "AEM - Leak Detection Services", "AEL - Environmental Labs", "ACS - Continuous Emissions Mont", "ATG - Alliance Technical Group", "DAS - Data Acquisition System", "AAS - Air Labs", "ECG - Combustion Group"], datasets:[{ data:[318, 215, 104, 88, 87, 54, 40, 25], backgroundColor:BLUE, borderRadius:3 }]},
+  options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{ x:{grid:{color:GRID},ticks:{color:MUTED}}, y:{grid:{display:false},ticks:{font:{size:10}}} } }
+});
+new Chart(document.getElementById('cce_trendLine'), {
+  type:'line',
+  data:{ labels:["Jan-26", "Feb-26", "Mar-26", "Apr-26", "May-26", "Jun-26", "Jul-26"], datasets:[{ data:[139, 160, 139, 184, 93, 224, 46], borderColor:BLUE, backgroundColor:'transparent', borderWidth:2, pointRadius:4, pointBackgroundColor:BLUE, tension:0 }]},
+  options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+    scales:{ x:{grid:{display:false}}, y:{grid:{color:GRID},ticks:{color:MUTED}} } }
+});
+
+new Chart(document.getElementById('ive_bar'), {
+  type:'bar',
+  data:{ labels:["Jan-26", "Feb-26", "Mar-26", "Apr-26", "May-26", "Jun-26", "Jul-26"], datasets:[
+    {label:'Internal', data:[4601, 2157, 2442, 2973, 3962, 4821, 3072], backgroundColor:BLUE, borderRadius:3},
+    {label:'External', data:[1770, 1003, 1171, 1025, 1525, 1552, 877], backgroundColor:ORANGE, borderRadius:3}
+  ]},
+  options:{ responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom',labels:{boxWidth:12}}},
+    scales:{ x:{stacked:true,grid:{display:false}}, y:{stacked:true,grid:{color:GRID},ticks:{color:MUTED}} } }
+});
+new Chart(document.getElementById('ive_pie'), {
+  type:'pie',
+  data:{ labels:['Internal','External'], datasets:[{ data:[24028,8923], backgroundColor:[BLUE,ORANGE] }]},
+  options:{ responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom',labels:{boxWidth:12}},
+      tooltip:{callbacks:{label:(ctx)=> ctx.label+': '+ctx.parsed.toLocaleString()+' activities'}}} }
+});
+
+new Chart(document.getElementById('icb_topBar'), {
+  type:'bar',
+  data:{ labels:["AEM - Leak Detection Services", "AST - Stack Testing", "AEL - Environmental Labs", "ACS - Continuous Emissions Mont", "ATG - Alliance Technical Group", "DAS - Data Acquisition System", "ECG - Combustion Group", "AAS - Air Labs"], datasets:[{ data:[9260, 7797, 2340, 1068, 938, 801, 608, 395], backgroundColor:BLUE, borderRadius:3 }]},
+  options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{ x:{grid:{color:GRID},ticks:{color:MUTED}}, y:{grid:{display:false},ticks:{font:{size:10}}} } }
+});
+new Chart(document.getElementById('icb_trendLine'), {
+  type:'line',
+  data:{ labels:["Jan-26", "Feb-26", "Mar-26", "Apr-26", "May-26", "Jun-26", "Jul-26"], datasets:[{ data:[4601, 2157, 2442, 2973, 3962, 4821, 3072], borderColor:BLUE, backgroundColor:'transparent', borderWidth:2, pointRadius:4, pointBackgroundColor:BLUE, tension:0 }]},
+  options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+    scales:{ x:{grid:{display:false}}, y:{grid:{color:GRID},ticks:{color:MUTED}} } }
+});
+
+new Chart(document.getElementById('ecb_topBar'), {
+  type:'bar',
+  data:{ labels:["AEM - Leak Detection Services", "AST - Stack Testing", "ACS - Continuous Emissions Mont", "AEL - Environmental Labs", "ECG - Combustion Group", "ATG - Alliance Technical Group", "AAS - Air Labs", "DAS - Data Acquisition System"], datasets:[{ data:[3300, 1986, 1310, 1071, 252, 240, 222, 127], backgroundColor:BLUE, borderRadius:3 }]},
+  options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{ x:{grid:{color:GRID},ticks:{color:MUTED}}, y:{grid:{display:false},ticks:{font:{size:10}}} } }
+});
+new Chart(document.getElementById('ecb_trendLine'), {
+  type:'line',
+  data:{ labels:["Jan-26", "Feb-26", "Mar-26", "Apr-26", "May-26", "Jun-26", "Jul-26"], datasets:[{ data:[1770, 1003, 1171, 1025, 1525, 1552, 877], borderColor:BLUE, backgroundColor:'transparent', borderWidth:2, pointRadius:4, pointBackgroundColor:BLUE, tension:0 }]},
+  options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+    scales:{ x:{grid:{display:false}}, y:{grid:{color:GRID},ticks:{color:MUTED}} } }
+});
+
+new Chart(document.getElementById('ci_topBar'), {
+  type:'bar',
+  data:{ labels:['AEM - Leak Detection Services','AST - Stack Testing','ATG - Alliance Technical Group','AEL - Environmental Labs','ACS - Continuous Emissions Mont','IDS (unmatched)'],
+    datasets:[{ data:[10,5,5,2,1,1], backgroundColor:['#214592','#214592','#214592','#214592','#214592','#dd6e0c'], borderRadius:3 }]},
+  options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+    scales:{ x:{grid:{color:'#e1e0d9'},ticks:{color:'#898781'}}, y:{grid:{display:false},ticks:{font:{size:10.5}}} } }
+});
+
+new Chart(document.getElementById('ast_certCountBar'), {
+  type:'bar',
+  data:{ labels:['1 certification','2 certifications','3 certifications','4 certifications','5 certifications'], datasets:[{ data:[48,25,8,5,0], backgroundColor:BLUE, borderRadius:3 }]},
+  options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+    scales:{ x:{grid:{display:false}}, y:{grid:{color:GRID},ticks:{color:MUTED}} } }
+});
+new Chart(document.getElementById('ast_groupStackedByOrg'), {
+  type:'bar',
+  data:{ labels:['Group 1','Group 2','Group 3','Group 4','Group 5'], datasets:[
+    {label:'Stack Testing', data:[41,18,78,10,3], backgroundColor:BLUE, borderRadius:3},
+    {label:'Alliance Technical Group', data:[0,0,1,0,0], backgroundColor:ORANGE, borderRadius:3},
+    {label:'Temp CEMS', data:[0,0,0,0,1], backgroundColor:CHARCOAL, borderRadius:3}
+  ]},
+  options:{ responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom',labels:{boxWidth:12}}},
+    scales:{ x:{stacked:true,grid:{display:false}}, y:{stacked:true,grid:{color:GRID},ticks:{color:MUTED}} } }
+});
+
+// ---- single-document "page" navigation ----
+const pageIds = ['dashboard','summary','hours-by-bu','counts-by-bu-combined','counts-by-bu-courses',
+                  'counts-by-bu-events','internal-vs-external','internal-counts-by-bu','external-counts-by-bu',
+                  'course-intake','ast'];
+const navLinks = document.querySelectorAll('.navlink');
+const pageSections = document.querySelectorAll('.page-section');
+
+function showPage(id){
+  if (!pageIds.includes(id)) id = pageIds[0];
+  pageSections.forEach(sec => sec.classList.toggle('active', sec.id === id));
+  navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+  window.scrollTo(0, 0);
+}
+
+navLinks.forEach(a => {
+  a.addEventListener('click', (e) => {
+    e.preventDefault();
+    const id = a.getAttribute('href').slice(1);
+    history.pushState(null, '', '#' + id);
+    showPage(id);
+  });
+});
+
+window.addEventListener('popstate', () => showPage(location.hash.slice(1)));
+showPage(location.hash ? location.hash.slice(1) : pageIds[0]);
+
+// ---- PM Group QI Status table sort ----
+(function(){
+  const headers = document.querySelectorAll('#pmTable th.sortable');
+  const tbody = document.getElementById('pmTableBody');
+  if (!headers.length || !tbody) return;
+  let currentKey = null;
+  let ascending = true;
+
+  function sortRows(key){
+    const attr = 'data-' + key;
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.sort((a, b) => {
+      const av = a.getAttribute(attr) || '';
+      const bv = b.getAttribute(attr) || '';
+      const aEmpty = av === '';
+      const bEmpty = bv === '';
+      if (aEmpty && bEmpty) return 0;
+      if (aEmpty) return 1;  // blanks always last
+      if (bEmpty) return -1;
+      if (av < bv) return ascending ? -1 : 1;
+      if (av > bv) return ascending ? 1 : -1;
+      return 0;
+    });
+    rows.forEach(r => tbody.appendChild(r));
+  }
+
+  function updateArrows(){
+    headers.forEach(h => {
+      const arrow = h.querySelector('.sort-arrow');
+      if (h.dataset.key === currentKey) {
+        arrow.innerHTML = ascending ? '&uarr;' : '&darr;';
+      } else {
+        arrow.innerHTML = '';
+      }
+    });
+  }
+
+  headers.forEach(h => {
+    h.addEventListener('click', () => {
+      const key = h.dataset.key;
+      if (key === currentKey) {
+        ascending = !ascending;
+      } else {
+        currentKey = key;
+        ascending = true;
+      }
+      sortRows(currentKey);
+      updateArrows();
+    });
+  });
+
+  currentKey = 'name';
+  sortRows(currentKey);
+  updateArrows();
+})();
+</script>
+</body>
+</html>
