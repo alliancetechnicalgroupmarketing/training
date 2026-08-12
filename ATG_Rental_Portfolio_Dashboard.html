@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ATG Rental Portfolio Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"
+        onerror="this.onerror=null;document.write('<script src=\'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js\'>\x3c/script>')"></script>
+<style>
+  :root{
+    --blue:#214592;
+    --blue-dark:#152d61;
+    --orange:#dd6e0c;
+    --charcoal:#444444;
+    --bg:#f4f5f8;
+    --card:#ffffff;
+    --border:#e2e5ea;
+    --muted:#767b87;
+    --text:#2b2d33;
+    --red:#b23a3a;
+    --green:#2f7d4f;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:"Segoe UI","Helvetica Neue",Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{
+    font-family:Georgia,"Times New Roman",serif;
+    color:var(--blue-dark);
+    margin:0;
+  }
+  .num{font-variant-numeric:tabular-nums;}
+
+  /* ---------- header ---------- */
+  header{
+    background:linear-gradient(135deg,var(--blue-dark),var(--blue) 70%);
+    color:#fff;
+    padding:28px 36px 24px;
+  }
+  header .eyebrow{
+    text-transform:uppercase;
+    letter-spacing:.14em;
+    font-size:11px;
+    color:#c3cdec;
+    font-weight:600;
+    margin-bottom:6px;
+  }
+  header h1{color:#fff;font-size:26px;font-weight:400;letter-spacing:.01em;}
+  header .sub{color:#cdd6f0;font-size:13px;margin-top:6px;}
+  header .accent-bar{height:3px;width:64px;background:var(--orange);margin-top:14px;border-radius:2px;}
+
+  .wrap{max-width:1320px;margin:0 auto;padding:0 24px 60px;}
+
+  /* ---------- KPI row ---------- */
+  .kpis{
+    display:grid;
+    grid-template-columns:repeat(6,1fr);
+    gap:14px;
+    margin-top:-28px;
+    position:relative;
+    z-index:2;
+  }
+  .kpi{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:16px 16px 14px;
+    box-shadow:0 6px 18px rgba(21,45,97,0.08);
+  }
+  .kpi .label{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;}
+  .kpi .value{font-size:24px;font-weight:700;color:var(--blue-dark);margin-top:6px;}
+  .kpi .value.orange{color:var(--orange);}
+  .kpi .value.red{color:var(--red);}
+  .kpi .foot{font-size:11.5px;color:var(--muted);margin-top:4px;}
+
+  /* ---------- section shell ---------- */
+  section{margin-top:34px;}
+  .section-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px;}
+  .section-head h2{font-size:18px;font-weight:400;}
+  .section-head .desc{font-size:12.5px;color:var(--muted);}
+
+  /* ---------- expiration ribbon (signature element) ---------- */
+  .ribbon-card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:20px 22px 16px;
+  }
+  .ribbon-legend{display:flex;gap:18px;font-size:11.5px;color:var(--muted);margin-bottom:14px;flex-wrap:wrap;}
+  .ribbon-legend span{display:inline-flex;align-items:center;gap:6px;}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
+  .dot.red{background:var(--red);} .dot.orange{background:var(--orange);} .dot.blue{background:var(--blue);} .dot.gray{background:#b7bcc6;}
+  .ribbon{
+    display:flex;
+    overflow-x:auto;
+    gap:0;
+    padding-bottom:10px;
+    scroll-snap-type:x proximity;
+  }
+  .ribbon::-webkit-scrollbar{height:6px;}
+  .ribbon::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+  .rib-item{
+    flex:0 0 148px;
+    scroll-snap-align:start;
+    border-left:3px solid var(--border);
+    padding:6px 14px 4px 12px;
+    position:relative;
+    cursor:default;
+  }
+  .rib-item .rib-date{font-size:10.5px;color:var(--muted);font-weight:600;letter-spacing:.02em;}
+  .rib-item .rib-city{font-size:13px;font-weight:600;color:var(--text);margin-top:3px;line-height:1.25;}
+  .rib-item .rib-rent{font-size:11px;color:var(--muted);margin-top:3px;}
+  .rib-item.urg-red{border-left-color:var(--red);}
+  .rib-item.urg-orange{border-left-color:var(--orange);}
+  .rib-item.urg-blue{border-left-color:var(--blue);}
+
+  /* ---------- charts ---------- */
+  .chart-grid{
+    display:grid;
+    grid-template-columns:1.4fr 1fr;
+    gap:16px;
+  }
+  .chart-card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:18px 20px;
+  }
+  .chart-card h3{font-size:14px;font-weight:600;color:var(--text);font-family:inherit;margin-bottom:2px;}
+  .chart-card .cap{font-size:11.5px;color:var(--muted);margin-bottom:10px;}
+  .chart-holder{position:relative;height:260px;}
+
+  /* ---------- filters ---------- */
+  .filters{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:16px 20px;
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    align-items:flex-end;
+  }
+  .filt{display:flex;flex-direction:column;gap:5px;}
+  .filt label{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;}
+  .filt select, .filt input{
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:7px 10px;
+    font-size:13px;
+    font-family:inherit;
+    color:var(--text);
+    background:#fff;
+    min-width:140px;
+  }
+  .filt input#searchBox{min-width:220px;}
+  .filt select:focus, .filt input:focus{outline:2px solid var(--blue);outline-offset:1px;}
+  .reset-btn{
+    background:none;
+    border:1px solid var(--border);
+    color:var(--muted);
+    border-radius:6px;
+    padding:7px 12px;
+    font-size:12.5px;
+    cursor:pointer;
+    height:34px;
+  }
+  .reset-btn:hover{border-color:var(--orange);color:var(--orange);}
+  .result-count{font-size:12px;color:var(--muted);margin-left:auto;align-self:center;}
+
+  /* ---------- table ---------- */
+  .table-wrap{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    margin-top:16px;
+    overflow:hidden;
+  }
+  table{width:100%;border-collapse:collapse;font-size:12.8px;}
+  thead th{
+    text-align:left;
+    background:#eef1f8;
+    color:var(--blue-dark);
+    font-weight:600;
+    padding:10px 12px;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    cursor:pointer;
+    white-space:nowrap;
+    user-select:none;
+    border-bottom:1px solid var(--border);
+  }
+  thead th:hover{background:#e2e8f6;}
+  thead th .arrow{color:var(--orange);margin-left:3px;font-size:10px;}
+  tbody tr{border-bottom:1px solid var(--border);cursor:pointer;}
+  tbody tr:hover{background:#f7f9fd;}
+  tbody td{padding:9px 12px;vertical-align:top;white-space:nowrap;}
+  td.wrap-cell{white-space:normal;max-width:220px;}
+  .status-pill{
+    display:inline-block;
+    padding:2px 9px;
+    border-radius:20px;
+    font-size:10.5px;
+    font-weight:600;
+    letter-spacing:.02em;
+  }
+  .status-Active{background:#e5f2ea;color:var(--green);}
+  .status-MTM{background:#fdeee0;color:var(--orange);}
+  .status-Pending{background:#e6ecfa;color:var(--blue);}
+  .status-Owned{background:#eee;color:var(--charcoal);}
+  .row-detail{background:#fafbfd;}
+  .row-detail td{padding:14px 20px;white-space:normal;}
+  .detail-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px 24px;font-size:12.5px;}
+  .detail-grid div span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:2px;}
+  .expand-icon{color:var(--muted);font-size:11px;width:14px;display:inline-block;}
+
+  footer{
+    text-align:center;
+    color:var(--muted);
+    font-size:11.5px;
+    padding:30px 0 10px;
+  }
+
+  @media (max-width:1100px){
+    .kpis{grid-template-columns:repeat(3,1fr);}
+    .chart-grid{grid-template-columns:1fr;}
+  }
+  @media (max-width:640px){
+    .kpis{grid-template-columns:repeat(2,1fr);}
+    .detail-grid{grid-template-columns:repeat(2,1fr);}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap" style="padding:0;">
+    <div class="eyebrow">Alliance Technical Group, LLC — Corporate Real Estate</div>
+    <h1>Rental Portfolio Dashboard</h1>
+    <div class="sub">88 sites tracked across the ATG platform &middot; source: Alliance Technical Group_Rental Report, Aug 4 2026</div>
+    <div class="accent-bar"></div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="kpis" id="kpiRow"></div>
+
+  <section>
+    <div class="section-head">
+      <h2>Lease Maturity Ribbon</h2>
+      <div class="desc">Every leased site, ordered by current expiration date &mdash; scroll to see the full runway</div>
+    </div>
+    <div class="ribbon-card">
+      <div class="ribbon-legend">
+        <span><span class="dot red"></span> Expires within 6 months</span>
+        <span><span class="dot orange"></span> 6&ndash;12 months</span>
+        <span><span class="dot blue"></span> Beyond 12 months</span>
+        <span><span class="dot gray"></span> No date on file</span>
+      </div>
+      <div class="ribbon" id="ribbon"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Portfolio Composition</h2>
+      <div class="desc">Rent commitment and footprint by region and space type</div>
+    </div>
+    <div class="chart-grid">
+      <div class="chart-card">
+        <h3>Annual Rent by Region</h3>
+        <div class="cap">Sum of current annual rent (USD), by lease hierarchy region</div>
+        <div class="chart-holder"><canvas id="regionChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Rentable SF by Building Type</h3>
+        <div class="cap">Share of total leased square footage</div>
+        <div class="chart-holder"><canvas id="typeChart"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Site Directory</h2>
+      <div class="desc">Filter, search, and sort the full lease schedule &mdash; click a row for full detail</div>
+    </div>
+
+    <div class="filters">
+      <div class="filt">
+        <label>Search</label>
+        <input id="searchBox" type="text" placeholder="City, tenant, address...">
+      </div>
+      <div class="filt">
+        <label>Region</label>
+        <select id="fRegion"><option value="">All</option></select>
+      </div>
+      <div class="filt">
+        <label>State / Province</label>
+        <select id="fState"><option value="">All</option></select>
+      </div>
+      <div class="filt">
+        <label>Status</label>
+        <select id="fStatus"><option value="">All</option></select>
+      </div>
+      <div class="filt">
+        <label>Building Type</label>
+        <select id="fType"><option value="">All</option></select>
+      </div>
+      <button class="reset-btn" id="resetBtn">Clear filters</button>
+      <div class="result-count" id="resultCount"></div>
+    </div>
+
+    <div class="table-wrap">
+      <table id="leaseTable">
+        <thead>
+          <tr>
+            <th data-key="_expand" style="width:22px;"></th>
+            <th data-key="Building Name">Site</th>
+            <th data-key="State">State</th>
+            <th data-key="Lease Hierarchy">Region</th>
+            <th data-key="Lease Status">Status</th>
+            <th data-key="Building Type">Type</th>
+            <th data-key="Lease Rentable Area Converted to SF">SF</th>
+            <th data-key="Current Annual Rent USD">Annual Rent</th>
+            <th data-key="Annualized Rent Expense USD per SF">$/SF</th>
+            <th data-key="Current Expiration Date">Expires</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    Prepared from Alliance Technical Group_Rental Report (uploaded Aug 4, 2026) &middot; figures reflect data as provided, unverified against source lease documents.
+  </footer>
+</div>
+
+<script>
+const RAW = [{"System Lease ID": 68006.0, "Client Lease ID": "AB_CALGARY_1411 25 AVENUE NE", "Client Building ID": "AB_CALGARY_1411 25 AVENUE NE", "Lease Hierarchy": "NE", "Tenant Legal Name": "Alliance Technical Group North, Inc.", "Building Name": "Calgary - 1411 25 Avenue NE", "Address 1": "1411 25 Avenue NE", "Address 2": null, "Suite": "Bays 2-5", "City": "Calgary", "State": "AB", "Country": "Canada", "Lease Status": "Active", "Original Commencement Date": "2025-10-01", "Current Commencement Date": "2025-10-01", "Current Expiration Date": "2030-09-30", "Current Term": "5 years", "Building Type": "Office/Warehouse", "Lease Rentable Area": 17966.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 17966.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 13564.33, "Current Annual Rent USD": 166841.25, "Annualized Rent Expense USD per SF": 9.29}, {"System Lease ID": 74760.0, "Client Lease ID": "AB_EDMONTON_9348-46-44 49 STREET NW", "Client Building ID": "EDM9348", "Lease Hierarchy": "NE", "Tenant Legal Name": "The Emissions Test Group Inc.", "Building Name": "Edmonton - 9348-46-44 - 49th Street", "Address 1": "9348-46-44 - 49th Street", "Address 2": "Plan 762 2073, Block 2, Lots 3-5", "Suite": "Unit 9344, 9346 and 9348", "City": "Edmonton", "State": "AB", "Country": "Canada", "Lease Status": "Active", "Original Commencement Date": "2018-10-01", "Current Commencement Date": "2023-10-01", "Current Expiration Date": "2028-09-30", "Current Term": "5 years", "Building Type": "Office", "Lease Rentable Area": 9953.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 9953.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 5010.96, "Current Annual Rent USD": 60137.46, "Annualized Rent Expense USD per SF": 6.04}, {"System Lease ID": 75344.0, "Client Lease ID": "AB_EDMONTON_9358_60_49 STREET NW", "Client Building ID": "EDM9358", "Lease Hierarchy": "NE", "Tenant Legal Name": "Alliance Technical Group North Inc.", "Building Name": "Edmonton - 9358/9360 49 Street NW", "Address 1": "9358/9360 49 Street NW", "Address 2": null, "Suite": null, "City": "Edmonton", "State": "AB", "Country": "Canada", "Lease Status": "Pending", "Original Commencement Date": "2026-09-01", "Current Commencement Date": "2026-09-01", "Current Expiration Date": "2028-09-30", "Current Term": "2 years, 1 month", "Building Type": "Industrial", "Lease Rentable Area": 6752.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 6752.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 0.0, "Current Annual Rent USD": 17366.55, "Annualized Rent Expense USD per SF": 7.69}, {"System Lease ID": 66110.0, "Client Lease ID": "AK_ANCHORAGE_106 E Dowling Road", "Client Building ID": "ANC0106", "Lease Hierarchy": "NW", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Anchorage - 106 E Dowling Road", "Address 1": "106 E Dowling Road", "Address 2": null, "Suite": "Suite B", "City": "Anchorage", "State": "AK", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2025-07-01", "Current Commencement Date": "2025-07-01", "Current Expiration Date": "2030-06-30", "Current Term": "5 years", "Building Type": "Warehouse", "Lease Rentable Area": 3731.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 3731.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 5111.47, "Current Annual Rent USD": 60668.82, "Annualized Rent Expense USD per SF": 16.26}, {"System Lease ID": 59952.0, "Client Lease ID": "AL _ Alabaster _ 516 Galloway Circle", "Client Building ID": "ALA0516", "Lease Hierarchy": "SE", "Tenant Legal Name": "Alliance Source Testing, LLC", "Building Name": "Alabaster - 516 Galloway Circle", "Address 1": "516 Galloway Circle", "Address 2": null, "Suite": null, "City": "Alabaster", "State": "AL", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2018-10-01", "Current Commencement Date": "2021-10-01", "Current Expiration Date": "2026-09-30", "Current Term": "5 years", "Building Type": "Office/Warehouse", "Lease Rentable Area": 8750.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 8750.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 6134.17, "Current Annual Rent USD": 55207.53, "Annualized Rent Expense USD per SF": 8.44}, {"System Lease ID": 60237.0, "Client Lease ID": "AL_Decatur_255 Grant Street Se, Suites 600, 303, 301, 302, 304, 306/307, 308, 309 & 408", "Client Building ID": "DEC0255", "Lease Hierarchy": "SE", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Progress Tower", "Address 1": "255 Grant Street SE", "Address 2": null, "Suite": "600, 303, 301, 302, 304, 306/307, 308, 309 & 408", "City": "Decatur", "State": "AL", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2018-11-02", "Current Commencement Date": "2025-11-01", "Current Expiration Date": "2030-10-31", "Current Term": "5 years", "Building Type": "Office", "Lease Rentable Area": 9015.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 9015.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 11398.75, "Current Annual Rent USD": 136785.0, "Annualized Rent Expense USD per SF": 15.17}, {"System Lease ID": 61275.0, "Client Lease ID": "AL_DECATUR_3630 CENTRAL PARKWAY SW A", "Client Building ID": "AL_DECATUR_3630 CENTRAL PARKWAY SW A", "Lease Hierarchy": "SE", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Decatur-3630 Central Parkway SW A", "Address 1": "3630 Central Parkway SW A", "Address 2": null, "Suite": null, "City": "Decatur", "State": "AL", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2025-02-16", "Current Commencement Date": "2025-02-16", "Current Expiration Date": "2030-02-15", "Current Term": "5 years", "Building Type": "Lab", "Lease Rentable Area": 2400.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 2400.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 2756.25, "Current Annual Rent USD": 32812.5, "Annualized Rent Expense USD per SF": 13.67}, {"System Lease ID": 59930.0, "Client Lease ID": "AR _ Bryant _ 219 Brown Lane", "Client Building ID": "BRY0219", "Lease Hierarchy": "Central", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Bryant - 219 Brown Lane", "Address 1": "219 Brown Lane", "Address 2": null, "Suite": null, "City": "Bryant", "State": "AR", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2022-12-01", "Current Commencement Date": "2022-12-01", "Current Expiration Date": "2027-11-30", "Current Term": "5 years", "Building Type": "Office", "Lease Rentable Area": 7100.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 7100.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 9667.0, "Current Annual Rent USD": 116004.0, "Annualized Rent Expense USD per SF": 16.34}, {"System Lease ID": 59832.0, "Client Lease ID": "AR _ North Little Rock _ 15 Maumelle Curve Court, Suite B", "Client Building ID": "NOR0015", "Lease Hierarchy": "Central", "Tenant Legal Name": "Alliance Source Testing, LLC", "Building Name": "North Little Rock - 15 Maumelle Curve Court", "Address 1": "15 Maumelle Curve Court", "Address 2": "Mauemelle Curve Business Park", "Suite": "B", "City": "North Little Rock", "State": "AR", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2017-03-01", "Current Commencement Date": "2024-10-01", "Current Expiration Date": "2029-12-31", "Current Term": "5 years, 3 months", "Building Type": "Office", "Lease Rentable Area": 10000.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 10000.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 7300.0, "Current Annual Rent USD": 87600.0, "Annualized Rent Expense USD per SF": 8.76}, {"System Lease ID": 59825.0, "Client Lease ID": "AZ _ Phoenix _ 3614 East Southern Avenue, Suite 1", "Client Building ID": "PHO3614", "Lease Hierarchy": "SW", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Phoenix - 3614 East Southern Avenue", "Address 1": "3614 East Southern Avenue", "Address 2": null, "Suite": "1", "City": "Phoenix", "State": "AZ", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2024-03-01", "Current Commencement Date": "2024-03-01", "Current Expiration Date": "2029-02-28", "Current Term": "5 years", "Building Type": "Office/Warehouse", "Lease Rentable Area": 8000.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 8000.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 11600.0, "Current Annual Rent USD": 138080.0, "Annualized Rent Expense USD per SF": 17.26}, {"System Lease ID": 59870.0, "Client Lease ID": "AZ _ Phoenix _ 4620 E. Elwood Street, Suite 4 & 5", "Client Building ID": "AZ _ Phoenix _ 4620 E. Elwood Street, Suite 4", "Lease Hierarchy": "SW", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Phoenix - 4620 E. Elwood Street", "Address 1": "4620 E. Elwood Street", "Address 2": "Westech Business Park I", "Suite": "4, 5", "City": "Phoenix", "State": "AZ", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2023-11-01", "Current Commencement Date": "2025-06-01", "Current Expiration Date": "2030-06-30", "Current Term": "5 years, 1 month", "Building Type": "Office/Warehouse", "Lease Rentable Area": 3480.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 3480.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 4301.0, "Current Annual Rent USD": 50987.0, "Annualized Rent Expense USD per SF": 14.65}, {"System Lease ID": 59869.0, "Client Lease ID": "CA _ Bakersfield _ 18828 Hwy 65", "Client Building ID": "CA _ Bakersfield _ 18828 Hwy 65", "Lease Hierarchy": "SW", "Tenant Legal Name": "Alliance Technical Group", "Building Name": "Bakersfield - 18828 Hwy 65", "Address 1": "18828 Hwy 65", "Address 2": null, "Suite": null, "City": "Bakersfield", "State": "CA", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2021-04-01", "Current Commencement Date": "2026-05-01", "Current Expiration Date": "2028-04-30", "Current Term": "2 years", "Building Type": "Office", "Lease Rentable Area": 6000.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 6000.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 3850.0, "Current Annual Rent USD": 44986.66, "Annualized Rent Expense USD per SF": 7.5}, {"System Lease ID": 59955.0, "Client Lease ID": "CA _ Bakersfield _ 6403 Seven Seas Avenue, Suite 3", "Client Building ID": "BAK6403", "Lease Hierarchy": "SW", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Bakersfield - 6403 Seven Seas Avenue", "Address 1": "6403 Seven Seas Avenue", "Address 2": null, "Suite": "3", "City": "Bakersfield", "State": "CA", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2024-01-01", "Current Commencement Date": "2026-01-01", "Current Expiration Date": "2026-12-31", "Current Term": "1 year", "Building Type": "Office", "Lease Rentable Area": 1200.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 1200.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 1380.0, "Current Annual Rent USD": 16560.0, "Annualized Rent Expense USD per SF": 13.8}, {"System Lease ID": 64094.0, "Client Lease ID": "CA_Cypress_11105 Dana Circle", "Client Building ID": "CYP1110", "Lease Hierarchy": "SW", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Cypress - 11105. Dana Circle", "Address 1": "11105. Dana Circle", "Address 2": null, "Suite": null, "City": "Cypress", "State": "CA", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2025-01-01", "Current Commencement Date": "2025-01-01", "Current Expiration Date": "2032-04-30", "Current Term": "7 years, 4 months", "Building Type": "Office", "Lease Rentable Area": 19421.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 19421.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 30151.1, "Current Annual Rent USD": 361813.2, "Annualized Rent Expense USD per SF": 18.63}, {"System Lease ID": 72192.0, "Client Lease ID": "CA_Hayward_3130 Diablo Avenue", "Client Building ID": "HAY3130", "Lease Hierarchy": "NW", "Tenant Legal Name": "Alliance Technical Group LLC", "Building Name": "Hayward - 3130 Diablo Avenue", "Address 1": "3130 Diablo Avenue", "Address 2": null, "Suite": null, "City": "Hayward", "State": "CA", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2026-03-01", "Current Commencement Date": "2026-03-01", "Current Expiration Date": "2031-02-28", "Current Term": "5 years", "Building Type": "Office/Warehouse", "Lease Rentable Area": 7888.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 7888.0, "Ownership Type": "Leased", "Lease Type": "Lease", "Current Month USD Rent Expenses": 11832.0, "Current Annual Rent USD": 118320.0, "Annualized Rent Expense USD per SF": 17.89}, {"System Lease ID": 59981.0, "Client Lease ID": "CA_Tustin_3002 Dow Business Center", "Client Building ID": "TUS3002", "Lease Hierarchy": "SW", "Tenant Legal Name": "Orange Coast Analytical, Inc", "Building Name": "Building 500", "Address 1": "3002 Dow Avenue", "Address 2": "Dow Business Center", "Suite": "530, 532, and 534", "City": "Tustin", "State": "CA", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "1992-05-01", "Current Commencement Date": "2023-07-01", "Current Expiration Date": "2026-08-31", "Current Term": "3 years, 2 months", "Building Type": "Lab", "Lease Rentable Area": 4979.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 4979.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 3064.0, "Current Annual Rent USD": 24512.0, "Annualized Rent Expense USD per SF": 7.39}, {"System Lease ID": 60121.0, "Client Lease ID": "CO_Arvada_5520-5530 Marshall Street", "Client Building ID": "ARV5520", "Lease Hierarchy": "SW", "Tenant Legal Name": "Alliance Source Testing, LLC", "Building Name": "Arvada - 5520-5530 Marshall Street", "Address 1": "5520-5530 Marshall Street", "Address 2": null, "Suite": null, "City": "Arvada", "State": "CO", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2018-03-30", "Current Commencement Date": "2028-04-01", "Current Expiration Date": "2033-03-31", "Current Term": "5 years", "Building Type": "Office/Warehouse", "Lease Rentable Area": 15300.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 15300.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 17763.64, "Current Annual Rent USD": 211611.54, "Annualized Rent Expense USD per SF": 13.83}, {"System Lease ID": 66756.0, "Client Lease ID": "CO_Ft. Collins_3825 Endurance Way", "Client Building ID": "FOR3825", "Lease Hierarchy": "SW", "Tenant Legal Name": "Slipstream Environmental Services", "Building Name": "Fort Collins - 3825 Endurance Way", "Address 1": "3825 Endurance Way", "Address 2": null, "Suite": null, "City": "Fort Collins", "State": "CO", "Country": "United States", "Lease Status": "MTM", "Original Commencement Date": "2024-03-01", "Current Commencement Date": "2025-03-01", "Current Expiration Date": "2026-12-31", "Current Term": "1 year, 10 months", "Building Type": "Other", "Lease Rentable Area": 2044.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 2044.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 1000.0, "Current Annual Rent USD": 12000.0, "Annualized Rent Expense USD per SF": 5.87}, {"System Lease ID": 59998.0, "Client Lease ID": "FL_Hernando_1183 E Overdrive Circle", "Client Building ID": "HER1183", "Lease Hierarchy": "SE", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Hernando - 1183 E. Overdrive Circle", "Address 1": "1183 E. Overdrive Circle", "Address 2": null, "Suite": null, "City": "Hernando", "State": "FL", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2021-01-01", "Current Commencement Date": "2026-01-01", "Current Expiration Date": "2030-12-31", "Current Term": "5 years", "Building Type": "Other", "Lease Rentable Area": 12000.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 12000.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 11000.0, "Current Annual Rent USD": 132000.0, "Annualized Rent Expense USD per SF": 11.0}, {"System Lease ID": 66656.0, "Client Lease ID": "FL_PENSACOLA_3410 WEST NINE MILE ROAD", "Client Building ID": "PEN3410", "Lease Hierarchy": "SE", "Tenant Legal Name": "Spectrum Systems, Inc.", "Building Name": "Pensacola - 3410 West Nine Mile Road", "Address 1": "3410 West Nine Mile Road", "Address 2": null, "Suite": null, "City": "Pensacola", "State": "FL", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2008-07-01", "Current Commencement Date": "2026-07-01", "Current Expiration Date": "2027-06-30", "Current Term": "1 year", "Building Type": "Office/Warehouse", "Lease Rentable Area": 25836.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 25836.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 0.0, "Current Annual Rent USD": 112400.0, "Annualized Rent Expense USD per SF": 4.35}, {"System Lease ID": 60138.0, "Client Lease ID": "FL_Starke_106 Ambient Airway", "Client Building ID": "STA0106", "Lease Hierarchy": "SE", "Tenant Legal Name": "Ambient Air Services, Inc", "Building Name": "Starke - 106 Ambient Airway", "Address 1": "106 Ambient Airway", "Address 2": null, "Suite": null, "City": "Starke", "State": "FL", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2018-01-01", "Current Commencement Date": "2018-01-01", "Current Expiration Date": "2032-12-31", "Current Term": "15 years", "Building Type": "Office", "Lease Rentable Area": 8100.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 8100.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 3690.0, "Current Annual Rent USD": 44280.0, "Annualized Rent Expense USD per SF": 5.47}, {"System Lease ID": 60746.0, "Client Lease ID": "GA_ACWORTH_3407 NOVIS POINTE NW", "Client Building ID": "ACW3407", "Lease Hierarchy": "SE", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Acworth - 3407 Novis Pointe", "Address 1": "3407 Novis Pointe", "Address 2": null, "Suite": null, "City": "Acworth", "State": "GA", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2024-07-11", "Current Commencement Date": "2024-07-11", "Current Expiration Date": "2034-07-31", "Current Term": "10 years, 21 days", "Building Type": "Office/Lab", "Lease Rentable Area": 15000.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 15000.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 19891.88, "Current Annual Rent USD": 234646.9, "Annualized Rent Expense USD per SF": 15.64}, {"System Lease ID": 64308.0, "Client Lease ID": "GA_HADDOCK_2608 EATONTON HIGHWAY", "Client Building ID": "HAD2608", "Lease Hierarchy": "SE", "Tenant Legal Name": "Summit Environmental Technologies, LLC", "Building Name": "Haddock - 2608 Eatonton Highway", "Address 1": "2608 Eatonton Highway", "Address 2": null, "Suite": null, "City": "Haddock", "State": "GA", "Country": "United States", "Lease Status": "MTM", "Original Commencement Date": "2023-10-16", "Current Commencement Date": "2024-10-17", "Current Expiration Date": "2025-12-31", "Current Term": "1 year, 2 months, 15 days", "Building Type": "Lab", "Lease Rentable Area": 900.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 900.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 0.0, "Current Annual Rent USD": null, "Annualized Rent Expense USD per SF": null}, {"System Lease ID": 60027.0, "Client Lease ID": "IA _ Hiawatha _ 1355 Sherman Road, Suites 200 And 300", "Client Building ID": "HIA1355", "Lease Hierarchy": "Central", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Hiawatha - 1355 Sherman Rd", "Address 1": "1355 Sherman Rd", "Address 2": null, "Suite": "200 and 300", "City": "Hiawatha", "State": "IA", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2023-05-30", "Current Commencement Date": "2023-05-30", "Current Expiration Date": "2028-05-29", "Current Term": "5 years", "Building Type": "Office/Warehouse", "Lease Rentable Area": 14000.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 14000.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 6416.67, "Current Annual Rent USD": 77000.04, "Annualized Rent Expense USD per SF": 5.5}, {"System Lease ID": 60117.0, "Client Lease ID": "IN_Evansvill_10441 Hedden Road", "Client Building ID": "EVA1044", "Lease Hierarchy": "East", "Tenant Legal Name": "Alliance Source Testing, LLC", "Building Name": "Evansville - 10441 Hedden Road", "Address 1": "10441 Hedden Road and 10499 Hedden Road", "Address 2": null, "Suite": null, "City": "Evansville", "State": "IN", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2019-09-01", "Current Commencement Date": "2021-05-01", "Current Expiration Date": "2028-04-30", "Current Term": "7 years", "Building Type": "Office", "Lease Rentable Area": 14280.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 14280.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 9140.0, "Current Annual Rent USD": 109680.0, "Annualized Rent Expense USD per SF": 7.68}, {"System Lease ID": 66687.0, "Client Lease ID": "IN_Indianapolis_ 4404 Guion Road", "Client Building ID": "IND4404", "Lease Hierarchy": "East", "Tenant Legal Name": "Monitoring Solutions, Incorporated", "Building Name": "Indianapolis - 4404 Guion Road", "Address 1": "4404 Guion Road", "Address 2": null, "Suite": null, "City": "Indianapolis", "State": "IN", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2017-08-01", "Current Commencement Date": "2017-08-01", "Current Expiration Date": "2027-07-31", "Current Term": "10 years", "Building Type": null, "Lease Rentable Area": 17180.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 17180.0, "Ownership Type": "Leased", "Lease Type": "Lease", "Current Month USD Rent Expenses": 6525.0, "Current Annual Rent USD": 76970.0, "Annualized Rent Expense USD per SF": 4.48}, {"System Lease ID": 73400.0, "Client Lease ID": "IN_PLAINFIELD_684 TOWER ROAD", "Client Building ID": "PLA0684", "Lease Hierarchy": "East", "Tenant Legal Name": "Grace Consulting Inc.", "Building Name": "Plainfield - 684 Tower Rd", "Address 1": "684 Tower Rd", "Address 2": null, "Suite": null, "City": "Plainfield", "State": "IN", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2025-01-01", "Current Commencement Date": "2025-01-01", "Current Expiration Date": "2029-01-01", "Current Term": "4 years, 1 day", "Building Type": "Office", "Lease Rentable Area": 4520.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 4520.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 3885.0, "Current Annual Rent USD": 46620.0, "Annualized Rent Expense USD per SF": 10.31}, {"System Lease ID": 73236.0, "Client Lease ID": "IND_Ahmedabad_132 Ft Ring Road", "Client Building ID": "AHM0132", "Lease Hierarchy": null, "Tenant Legal Name": "AllianceTG Environmental Solution India Private Limited", "Building Name": "Krupal Pathshala", "Address 1": "132 Feet Ring Road", "Address 2": null, "Suite": "1107", "City": "Ahmedabad", "State": "Gurajat", "Country": "India", "Lease Status": "Active", "Original Commencement Date": "2026-01-15", "Current Commencement Date": "2026-01-15", "Current Expiration Date": "2027-01-14", "Current Term": "1 year", "Building Type": "Office", "Lease Rentable Area": 2449.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 2449.0, "Ownership Type": "Leased", "Lease Type": "Lease", "Current Month USD Rent Expenses": 1121.36, "Current Annual Rent USD": 13456.06, "Annualized Rent Expense USD per SF": 5.71}, {"System Lease ID": 66022.0, "Client Lease ID": "KS_LENEXA_15481 W 110th", "Client Building ID": "KS_LENEXA_15481 W 110th", "Lease Hierarchy": "Central", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Lenexa-15481 W 110th", "Address 1": "15481 W 110th", "Address 2": null, "Suite": null, "City": "Lenexa", "State": "KS", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2025-12-01", "Current Commencement Date": "2025-12-01", "Current Expiration Date": "2032-11-30", "Current Term": "7 years", "Building Type": "Office/Warehouse", "Lease Rentable Area": 13039.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 13039.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 13307.52, "Current Annual Rent USD": 159918.43, "Annualized Rent Expense USD per SF": 12.26}, {"System Lease ID": 60089.0, "Client Lease ID": "KY_Louisville_4350 Brownsboro Road, Suite 170, 123", "Client Building ID": "LOU4350", "Lease Hierarchy": "SE", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "The Summit I Office Building", "Address 1": "4350 Brownsboro Rd", "Address 2": null, "Suite": "170 and 123", "City": "Louisville", "State": "KY", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2024-07-01", "Current Commencement Date": "2024-07-01", "Current Expiration Date": "2029-06-30", "Current Term": "5 years", "Building Type": "Office", "Lease Rentable Area": 1894.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 1894.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 3551.25, "Current Annual Rent USD": 42141.48, "Annualized Rent Expense USD per SF": 22.25}, {"System Lease ID": 59936.0, "Client Lease ID": "LA _ Geismar _ 6110 Copperhead Road", "Client Building ID": "GEI6110", "Lease Hierarchy": "Gulf", "Tenant Legal Name": "Alliance Source Testing, LLC", "Building Name": "Geismar - 6110 Copperhead Rd", "Address 1": "6110 Copperhead Rd", "Address 2": "Parish of Ascension", "Suite": null, "City": "Geismar", "State": "LA", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2020-12-01", "Current Commencement Date": "2020-12-01", "Current Expiration Date": "2027-11-30", "Current Term": "7 years", "Building Type": "Office/Warehouse", "Lease Rentable Area": 12000.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 12000.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 9000.0, "Current Annual Rent USD": 108000.0, "Annualized Rent Expense USD per SF": 9.0}, {"System Lease ID": 60934.0, "Client Lease ID": "LA_Baton Rouge_11930 Industriplex Blvd, Suite 11", "Client Building ID": "BAT1193", "Lease Hierarchy": "Gulf", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Baton Rouge - 11930 Industriplex Blvd", "Address 1": "11930 Industriplex Blvd", "Address 2": null, "Suite": "Suite 11", "City": "Baton Rouge", "State": "LA", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2024-07-01", "Current Commencement Date": "2026-07-01", "Current Expiration Date": "2028-06-30", "Current Term": "2 years", "Building Type": "Storage", "Lease Rentable Area": 1250.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 1250.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 995.0, "Current Annual Rent USD": 11340.0, "Annualized Rent Expense USD per SF": 9.07}, {"System Lease ID": 60082.0, "Client Lease ID": "LA_Baton Rouge_450 Laurel Street, Suite 2010", "Client Building ID": "BAT0450", "Lease Hierarchy": "Gulf", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Riverside Tower North", "Address 1": "450 Laurel Street", "Address 2": null, "Suite": "2050", "City": "Baton Rouge", "State": "LA", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2018-12-17", "Current Commencement Date": "2023-09-01", "Current Expiration Date": "2029-12-31", "Current Term": "6 years, 4 months", "Building Type": "Office", "Lease Rentable Area": 4871.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 4871.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 9133.13, "Current Annual Rent USD": 109597.56, "Annualized Rent Expense USD per SF": 22.5}, {"System Lease ID": 59917.0, "Client Lease ID": "LA_Lake Charles_1574 Sam Houston Jones Pkwy", "Client Building ID": "LAK1547", "Lease Hierarchy": "Gulf", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Lake Charles - 1574 Sam Houston Jones Pkwy", "Address 1": "1574 Sam Houston Jones Pkwy", "Address 2": "Calcasieu Parish", "Suite": null, "City": "Lake Charles", "State": "LA", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2023-06-14", "Current Commencement Date": "2026-06-14", "Current Expiration Date": "2029-06-13", "Current Term": "3 years", "Building Type": "Office", "Lease Rentable Area": 7700.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 7700.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 7500.0, "Current Annual Rent USD": 76950.0, "Annualized Rent Expense USD per SF": 9.99}, {"System Lease ID": 59923.0, "Client Lease ID": "MA _ Canton _ 1020 Turnpike Street, Suite 8", "Client Building ID": "CAN1020", "Lease Hierarchy": "NE", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Canton - 1020 Turnpike Street", "Address 1": "1020 Turnpike Street", "Address 2": null, "Suite": "8", "City": "Canton", "State": "MA", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2022-06-27", "Current Commencement Date": "2022-06-27", "Current Expiration Date": "2027-06-30", "Current Term": "5 years, 4 days", "Building Type": "Storage", "Lease Rentable Area": 3600.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 3600.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 5500.0, "Current Annual Rent USD": 66000.0, "Annualized Rent Expense USD per SF": 18.33}, {"System Lease ID": 71402.0, "Client Lease ID": "MA_SHARON_6 MERCHANT STREET", "Client Building ID": "MA_SHARON_6 MERCHANT STREET", "Lease Hierarchy": "NE", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Sharon - 6 Merchant Street", "Address 1": "6 Merchant Street", "Address 2": null, "Suite": "Suite 6", "City": "Sharon", "State": "MA", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2026-02-15", "Current Commencement Date": "2026-02-15", "Current Expiration Date": "2033-02-28", "Current Term": "7 years, 14 days", "Building Type": "Office/Warehouse", "Lease Rentable Area": 10300.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 10300.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 12832.08, "Current Annual Rent USD": 150972.8, "Annualized Rent Expense USD per SF": 16.72}, {"System Lease ID": 60154.0, "Client Lease ID": "MN_Circle Pines_4500 Ball Road Ne", "Client Building ID": "CIR4500", "Lease Hierarchy": "Central", "Tenant Legal Name": "Alliance Source Testing, LLC", "Building Name": "Circle Pines - 4500 Ball Road NE", "Address 1": "4500 Ball Road NE", "Address 2": "Interpoll Laboratories Headquarters", "Suite": null, "City": "Circle Pines", "State": "MN", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2022-01-01", "Current Commencement Date": "2022-01-01", "Current Expiration Date": "2028-12-31", "Current Term": "7 years", "Building Type": "Office", "Lease Rentable Area": 16200.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 16200.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 20653.0, "Current Annual Rent USD": 247836.0, "Annualized Rent Expense USD per SF": 15.3}, {"System Lease ID": 60146.0, "Client Lease ID": "MO _ Jefferson City _ 219 E Dunklin, Suite A", "Client Building ID": "JEF0219", "Lease Hierarchy": "Central", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Jefferson - 219 E Dunklin", "Address 1": "219 E Dunklin", "Address 2": null, "Suite": "Suite A", "City": "Jefferson City", "State": "MO", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2024-04-01", "Current Commencement Date": "2026-04-01", "Current Expiration Date": "2029-03-31", "Current Term": "3 years", "Building Type": "Office", "Lease Rentable Area": 3000.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 3000.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 2250.0, "Current Annual Rent USD": 26370.0, "Annualized Rent Expense USD per SF": 8.79}, {"System Lease ID": 60306.0, "Client Lease ID": "MO_St. Louis_13701 Rider Trail North", "Client Building ID": "STL1370", "Lease Hierarchy": "Central", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "St. Louis - 13701 Rider Trail North", "Address 1": "13701 Rider Trail North", "Address 2": null, "Suite": null, "City": "St. Louis", "State": "MO", "Country": "United States", "Lease Status": "Pending", "Original Commencement Date": "2024-12-01", "Current Commencement Date": "2024-12-01", "Current Expiration Date": "2032-03-31", "Current Term": "7 years, 4 months", "Building Type": "Office/Warehouse", "Lease Rentable Area": 10144.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 10144.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 7396.67, "Current Annual Rent USD": 88548.7, "Annualized Rent Expense USD per SF": 8.73}, {"System Lease ID": 60305.0, "Client Lease ID": "NC_Charlotte_4508 Westinghouse Blvd, Unit A, B", "Client Building ID": "CHA4508", "Lease Hierarchy": "East", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Charlotte - 4508 Westinghouse Blvd", "Address 1": "4508 Westinghouse Blvd", "Address 2": null, "Suite": "Unit A, B", "City": "Charlotte", "State": "NC", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2024-04-01", "Current Commencement Date": "2025-07-01", "Current Expiration Date": "2032-06-30", "Current Term": "7 years", "Building Type": "Office/Warehouse", "Lease Rentable Area": 11920.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 11920.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 14979.47, "Current Annual Rent USD": 176296.8, "Annualized Rent Expense USD per SF": 14.79}, {"System Lease ID": 73407.0, "Client Lease ID": "NC_CONOVER_1855 SIPE ROAD", "Client Building ID": "CON1855", "Lease Hierarchy": "East", "Tenant Legal Name": "Grace Consulting Inc.", "Building Name": "Conover - 1855 Sipe Road", "Address 1": "1855 Sipe Road", "Address 2": null, "Suite": null, "City": "Conover", "State": "NC", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2025-01-01", "Current Commencement Date": "2025-01-01", "Current Expiration Date": "2029-01-01", "Current Term": "4 years, 1 day", "Building Type": "Office", "Lease Rentable Area": 7765.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 7765.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 3150.0, "Current Annual Rent USD": 37800.0, "Annualized Rent Expense USD per SF": 4.87}, {"System Lease ID": 70472.0, "Client Lease ID": "NC_WILMINGTON_6319 CAROLINA BEACH ROAD, UNIT D", "Client Building ID": "WIL6319", "Lease Hierarchy": "East", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Wilmington - 6319 Carolina Beach Road", "Address 1": "6319 Carolina Beach Road", "Address 2": null, "Suite": "Unit D", "City": "Wilmington", "State": "NC", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2025-12-29", "Current Commencement Date": "2025-12-29", "Current Expiration Date": "2030-12-31", "Current Term": "5 years, 3 days", "Building Type": "Office/Lab", "Lease Rentable Area": 8186.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 8186.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 20000.0, "Current Annual Rent USD": 240000.0, "Annualized Rent Expense USD per SF": 29.32}, {"System Lease ID": 71628.0, "Client Lease ID": "NE_LINCOLN_1540 SOUTH 70TH STREET, SUITE 105", "Client Building ID": "NE_LINCOLN_1540 SOUTH 70TH STREET, SUITE 105", "Lease Hierarchy": "Central", "Tenant Legal Name": "Rich Trzupek", "Building Name": "Lincolnshire Square Office Park", "Address 1": "1540 South 70th Street", "Address 2": null, "Suite": "Suite 105", "City": "Lincoln", "State": "NE", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2026-01-01", "Current Commencement Date": "2026-01-01", "Current Expiration Date": "2027-12-31", "Current Term": "2 years", "Building Type": "Office", "Lease Rentable Area": 130.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 130.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 200.0, "Current Annual Rent USD": 2400.0, "Annualized Rent Expense USD per SF": 18.46}, {"System Lease ID": 60161.0, "Client Lease ID": "NE_Lincoln_233 South 13Th Street", "Client Building ID": "LIN0233", "Lease Hierarchy": "Central", "Tenant Legal Name": "Alliance Technical Group", "Building Name": "Nebraska, Lincoln - U. S. Bank Building", "Address 1": "233 South 13th Street", "Address 2": "Suite 1100", "Suite": "1117", "City": "Lincoln", "State": "NE", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2022-06-01", "Current Commencement Date": "2025-06-01", "Current Expiration Date": "2027-05-31", "Current Term": "2 years", "Building Type": "Office", "Lease Rentable Area": 300.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 300.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 1167.0, "Current Annual Rent USD": 14004.0, "Annualized Rent Expense USD per SF": 46.68}, {"System Lease ID": 60169.0, "Client Lease ID": "NJ _ Mountainside _ 284 Sheffield Street", "Client Building ID": "MOU0284", "Lease Hierarchy": "NE", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Mountainside - 284 Sheffield Street", "Address 1": "284 Sheffield Street", "Address 2": "Block 7M, Lot 21", "Suite": null, "City": "Mountainside", "State": "NJ", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2023-12-20", "Current Commencement Date": "2023-12-20", "Current Expiration Date": "2028-12-20", "Current Term": "5 years, 1 day", "Building Type": "Office", "Lease Rentable Area": 25700.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 25700.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 44273.92, "Current Annual Rent USD": 531287.04, "Annualized Rent Expense USD per SF": 20.67}, {"System Lease ID": 60171.0, "Client Lease ID": "NY_East Syracuse_6515A Basile Rowe", "Client Building ID": "SYR6515", "Lease Hierarchy": "NE", "Tenant Legal Name": "Alliance Source Testing, LLC", "Building Name": "E. Syracuse - 6515 Basile Rowe", "Address 1": "6515 Basile Rowe", "Address 2": null, "Suite": null, "City": "E. Syracuse", "State": "NY", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2021-12-01", "Current Commencement Date": "2021-12-01", "Current Expiration Date": "2027-02-28", "Current Term": "5 years, 3 months", "Building Type": "Office", "Lease Rentable Area": 7500.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 7500.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 4393.75, "Current Annual Rent USD": 52725.0, "Annualized Rent Expense USD per SF": 7.03}, {"System Lease ID": 60177.0, "Client Lease ID": "OH_Cuyahoga Falls_3310 Win Street", "Client Building ID": "CUY3310", "Lease Hierarchy": "East", "Tenant Legal Name": "Summit Environmental Technologies, LLC", "Building Name": "Cuyahoga Falls - 3310 Win Street", "Address 1": "3310 Win Street", "Address 2": null, "Suite": null, "City": "Cuyahoga Falls", "State": "OH", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2023-10-16", "Current Commencement Date": "2023-10-16", "Current Expiration Date": "2028-10-31", "Current Term": "5 years, 16 days", "Building Type": "Office", "Lease Rentable Area": 22864.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 22864.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 21218.0, "Current Annual Rent USD": 255889.08, "Annualized Rent Expense USD per SF": 11.19}, {"System Lease ID": 73410.0, "Client Lease ID": "OH_WELLINGTON_510 DICKSON STREET", "Client Building ID": "WEL0510", "Lease Hierarchy": "East", "Tenant Legal Name": "Grace Consulting Inc.", "Building Name": "Wellington-510 Dickson St.", "Address 1": "510 Dickson St.", "Address 2": null, "Suite": null, "City": "Wellington", "State": "OH", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2025-01-01", "Current Commencement Date": "2025-01-01", "Current Expiration Date": "2029-01-01", "Current Term": "4 years, 1 day", "Building Type": "Office", "Lease Rentable Area": 12124.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 12124.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 5250.0, "Current Annual Rent USD": 63000.0, "Annualized Rent Expense USD per SF": 5.2}, {"System Lease ID": 63071.0, "Client Lease ID": "OK_Clinton_245 Production Road", "Client Building ID": "OK_Clinton_245 Production Road", "Lease Hierarchy": "Central", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Bonham Industrial Park", "Address 1": "245 Production Road", "Address 2": null, "Suite": null, "City": "Clinton", "State": "OK", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2024-12-15", "Current Commencement Date": "2026-12-16", "Current Expiration Date": "2028-12-15", "Current Term": "2 years", "Building Type": "Office", "Lease Rentable Area": 2400.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 2400.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 850.0, "Current Annual Rent USD": 10238.71, "Annualized Rent Expense USD per SF": 4.27}, {"System Lease ID": 63455.0, "Client Lease ID": "ON_LONDON_1100 DEARNESS DRIVE", "Client Building ID": "LON1100", "Lease Hierarchy": "NE", "Tenant Legal Name": "Ortech Consulting Alliance Inc.", "Building Name": "LONDON - 1100 DEARNESS DRIVE", "Address 1": "1100 DEARNESS DRIVE", "Address 2": null, "Suite": "Unit 9, 10, 11", "City": "London", "State": "ON", "Country": "Canada", "Lease Status": "Active", "Original Commencement Date": "2001-06-01", "Current Commencement Date": "2025-03-25", "Current Expiration Date": "2030-01-31", "Current Term": "4 years, 10 months, 7 days", "Building Type": "Office/Warehouse", "Lease Rentable Area": 11413.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 11413.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 8112.02, "Current Annual Rent USD": 97015.86, "Annualized Rent Expense USD per SF": 8.5}, {"System Lease ID": 60302.0, "Client Lease ID": "On_mississauga_804 southdown road, BLDG D, units 1-6", "Client Building ID": "ON _ Mississauga _ 804 Southdown Road, Bldg D, Uni", "Lease Hierarchy": "NE", "Tenant Legal Name": "Ortech Consulting Alliance Inc.", "Building Name": "Mississauga - 804 Southdown Road", "Address 1": "804 Southdown Road", "Address 2": "Building D", "Suite": "Units 1-6", "City": "Mississauga", "State": "ON", "Country": "Canada", "Lease Status": "Active", "Original Commencement Date": "2009-01-01", "Current Commencement Date": "2024-01-01", "Current Expiration Date": "2028-12-31", "Current Term": "5 years", "Building Type": "Office", "Lease Rentable Area": 10879.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 10879.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 10954.33, "Current Annual Rent USD": 131465.03, "Annualized Rent Expense USD per SF": 12.08}, {"System Lease ID": 66567.0, "Client Lease ID": "ON_SARNIA_1086 Modeland Road, Suite 104, 147, 148, 149", "Client Building ID": "SAR1086", "Lease Hierarchy": "NE", "Tenant Legal Name": "Alliance Technical Group North Inc.", "Building Name": "The Commercialization Centre, 1010 Building", "Address 1": "1086 Modeland Road", "Address 2": "The Western Sarnia-Lambton Research Park", "Suite": "104, 147, 148, 149", "City": "Sarnia", "State": "ON", "Country": "Canada", "Lease Status": "Active", "Original Commencement Date": "2025-07-14", "Current Commencement Date": "2025-07-14", "Current Expiration Date": "2028-07-31", "Current Term": "3 years, 18 days", "Building Type": "Office/Lab", "Lease Rentable Area": 1488.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 1488.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 2587.95, "Current Annual Rent USD": 30530.78, "Annualized Rent Expense USD per SF": 20.52}, {"System Lease ID": 60277.0, "Client Lease ID": "OR_Tigard_12242 Sw Garden Place (Labcor)", "Client Building ID": "TIG1224", "Lease Hierarchy": "NW", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Tigard Business Park", "Address 1": "12242 SW Garden Place", "Address 2": "Building 1", "Suite": "12242", "City": "Tigard", "State": "OR", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2024-01-01", "Current Commencement Date": "2024-01-01", "Current Expiration Date": "2029-02-28", "Current Term": "5 years, 2 months", "Building Type": "Office", "Lease Rentable Area": 4940.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 4940.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 7080.26, "Current Annual Rent USD": 84963.12, "Annualized Rent Expense USD per SF": 17.2}, {"System Lease ID": 59800.0, "Client Lease ID": "PA _ Malvern _ 210 Three Tun Road, Suite 210 _ Sub Lease", "Client Building ID": "MAL0210", "Lease Hierarchy": "NE", "Tenant Legal Name": "The Golden Hands, LLC", "Building Name": "Malvern - 210 Three Tun Rd", "Address 1": "210 Three Tun Rd", "Address 2": "East Whiteland Township", "Suite": "210", "City": "Malvern", "State": "PA", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2022-10-01", "Current Commencement Date": "2022-10-01", "Current Expiration Date": "2026-12-31", "Current Term": "4 years, 3 months", "Building Type": "Office", "Lease Rentable Area": 3200.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 3200.0, "Ownership Type": "Leased", "Lease Type": "Sublessor", "Current Month USD Rent Expenses": null, "Current Annual Rent USD": null, "Annualized Rent Expense USD per SF": 0.0}, {"System Lease ID": 60217.0, "Client Lease ID": "PA _ Pittsburgh _ 20 Parkway View Drive, Bldg 0", "Client Building ID": "PIT0020", "Lease Hierarchy": "East", "Tenant Legal Name": "Alliance Source Testing, LLC", "Building Name": "Pittsburgh - 20 Parkway View Drive", "Address 1": "20 Parkway View Drive", "Address 2": "Parkway West Business Park, Building 0", "Suite": null, "City": "Pittsburgh", "State": "PA", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2022-04-01", "Current Commencement Date": "2024-11-01", "Current Expiration Date": "2029-10-31", "Current Term": "5 years", "Building Type": "Office/Warehouse", "Lease Rentable Area": 11720.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 11720.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 9742.0, "Current Annual Rent USD": 116904.0, "Annualized Rent Expense USD per SF": 9.97}, {"System Lease ID": 66676.0, "Client Lease ID": "PA_EXPORT_6017 ENTERPRISE DRIVE", "Client Building ID": "EXP6017", "Lease Hierarchy": "East", "Tenant Legal Name": "ESC Spectrum Corporation", "Building Name": "Export - 6017 Enterprise Drive", "Address 1": "6017 Enterprise Drive", "Address 2": null, "Suite": null, "City": "Export", "State": "PA", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2025-02-01", "Current Commencement Date": "2025-02-01", "Current Expiration Date": "2030-01-31", "Current Term": "5 years", "Building Type": "Manufacturing", "Lease Rentable Area": 28000.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 28000.0, "Ownership Type": "Leased", "Lease Type": "Lease", "Current Month USD Rent Expenses": 18036.29, "Current Annual Rent USD": 215910.15, "Annualized Rent Expense USD per SF": 7.71}, {"System Lease ID": 60184.0, "Client Lease ID": "PA_Malvern_210 Three Tun Road, Suite 210", "Client Building ID": "MAL0210", "Lease Hierarchy": "NE", "Tenant Legal Name": "Alliance Source Testing, LLC", "Building Name": "Malvern - 210 Three Tun Rd", "Address 1": "210 Three Tun Rd", "Address 2": "East Whiteland Township", "Suite": "210", "City": "Malvern", "State": "PA", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2022-01-01", "Current Commencement Date": "2022-01-01", "Current Expiration Date": "2026-12-31", "Current Term": "5 years", "Building Type": "Office", "Lease Rentable Area": 3200.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 3200.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 3497.0, "Current Annual Rent USD": 41964.0, "Annualized Rent Expense USD per SF": 13.11}, {"System Lease ID": 59813.0, "Client Lease ID": "PA_Washington_800 Western Avenue - Mplx Houston", "Client Building ID": "WAS0800", "Lease Hierarchy": "East", "Tenant Legal Name": "Alliance Emissions Montoring LLC", "Building Name": "Washington - 800 Western Avenue", "Address 1": "800 Western Avenue", "Address 2": "MPLX Houston", "Suite": null, "City": "Washington", "State": "PA", "Country": "United States", "Lease Status": "MTM", "Original Commencement Date": "2022-01-11", "Current Commencement Date": "2022-01-11", "Current Expiration Date": "2024-12-31", "Current Term": "2 years, 11 months, 21 days", "Building Type": "Office", "Lease Rentable Area": 1.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 1.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 0.0, "Current Annual Rent USD": null, "Annualized Rent Expense USD per SF": null}, {"System Lease ID": 60219.0, "Client Lease ID": "PA_Whitehall_5260 W Coplay Road", "Client Building ID": "WHI5260", "Lease Hierarchy": "East", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Whitehall - 5260 West Coplay Rd", "Address 1": "5260 West Coplay Rd", "Address 2": null, "Suite": null, "City": "Whitehall", "State": "PA", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2022-04-01", "Current Commencement Date": "2025-04-01", "Current Expiration Date": "2030-03-31", "Current Term": "5 years", "Building Type": "Office/Warehouse", "Lease Rentable Area": 9440.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 9440.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 8102.66, "Current Annual Rent USD": 96523.92, "Annualized Rent Expense USD per SF": 10.22}, {"System Lease ID": 64291.0, "Client Lease ID": "SC_COLUMBIA_215 STONERIDGE DRIVE", "Client Building ID": "COL0215", "Lease Hierarchy": "East", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Columbia - 215 Stoneridge Drive", "Address 1": "215 Stoneridge Drive", "Address 2": null, "Suite": null, "City": "Columbia", "State": "SC", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": null, "Current Commencement Date": "2024-09-30", "Current Expiration Date": "2037-08-15", "Current Term": "12 years, 10 months, 17 days", "Building Type": "Mixed Use", "Lease Rentable Area": 6730.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 6730.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 7166.12, "Current Annual Rent USD": 85993.44, "Annualized Rent Expense USD per SF": 12.78}, {"System Lease ID": 64293.0, "Client Lease ID": "SC_GREENVILLE_426 FAIRFOREST WAY", "Client Building ID": "GRE0426", "Lease Hierarchy": "East", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Greenville - 426 Fairforest Way", "Address 1": "426 Fairforest Way", "Address 2": null, "Suite": null, "City": "Greenville", "State": "SC", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2024-04-19", "Current Commencement Date": "2024-09-30", "Current Expiration Date": "2037-08-15", "Current Term": "12 years, 10 months, 17 days", "Building Type": "Office", "Lease Rentable Area": 34284.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 34284.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 32114.31, "Current Annual Rent USD": 385254.94, "Annualized Rent Expense USD per SF": 11.24}, {"System Lease ID": 72780.0, "Client Lease ID": "SD_RAPID CITY_2381 SOUTH PLAZA DRIVE", "Client Building ID": "RAP2381", "Lease Hierarchy": "Central", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Rapid City - 2381 South Plaza Drive", "Address 1": "2381 South Plaza Drive", "Address 2": null, "Suite": "Lot 5", "City": "Rapid City", "State": "SD", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2026-03-01", "Current Commencement Date": "2026-03-01", "Current Expiration Date": "2029-02-28", "Current Term": "3 years", "Building Type": "Other", "Lease Rentable Area": 4950.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 4950.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 5300.63, "Current Annual Rent USD": 53006.3, "Annualized Rent Expense USD per SF": 12.77}, {"System Lease ID": 72860.0, "Client Lease ID": "SD_RAPID CITY_2455 SOUTH PLAZA DRIVE", "Client Building ID": "RAP2455", "Lease Hierarchy": "Central", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Rapid City - 2455 South Plaza Drive", "Address 1": "2455 South Plaza Drive", "Address 2": null, "Suite": "Unit 2D", "City": "Rapid City", "State": "SD", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2026-03-01", "Current Commencement Date": "2026-03-01", "Current Expiration Date": "2029-02-28", "Current Term": "3 years", "Building Type": "Other", "Lease Rentable Area": 2450.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 2450.0, "Ownership Type": "Leased", "Lease Type": "Lease", "Current Month USD Rent Expenses": 2200.92, "Current Annual Rent USD": 22009.2, "Annualized Rent Expense USD per SF": 10.72}, {"System Lease ID": 66703.0, "Client Lease ID": "TN_KNOXVILLE_230 TECH DRIVE", "Client Building ID": "KNO0230", "Lease Hierarchy": "SE", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Knoxville - 230 Tech Drive", "Address 1": "230 Tech Drive", "Address 2": "Building No. 3", "Suite": null, "City": "Knoxville", "State": "TN", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2007-05-07", "Current Commencement Date": "2026-05-07", "Current Expiration Date": "2029-05-06", "Current Term": "3 years", "Building Type": "Storage", "Lease Rentable Area": 10000.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 10000.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 11666.67, "Current Annual Rent USD": 140000.04, "Annualized Rent Expense USD per SF": 14.0}, {"System Lease ID": 60405.0, "Client Lease ID": "TX _ Carrollton, 3226 Commander Drive _", "Client Building ID": "CAR3226", "Lease Hierarchy": "SW", "Tenant Legal Name": "Alliance Source Testing, LLC", "Building Name": "Carrollton - 3226 Commander Drive", "Address 1": "3226 Commander Drive", "Address 2": null, "Suite": null, "City": "Carrollton", "State": "TX", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2018-02-01", "Current Commencement Date": "2023-02-01", "Current Expiration Date": "2028-01-31", "Current Term": "5 years", "Building Type": "Office", "Lease Rentable Area": 15000.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 15000.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 13432.93, "Current Annual Rent USD": 160803.9, "Annualized Rent Expense USD per SF": 10.72}, {"System Lease ID": 67691.0, "Client Lease ID": "TX_Austin_9500 Arboretum Blvd", "Client Building ID": "AUS9500", "Lease Hierarchy": "Gulf", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Austin - 9500 Arboretum Boulevard", "Address 1": "9500 Arboretum Boulevard", "Address 2": null, "Suite": "420", "City": "Austin", "State": "TX", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2025-12-01", "Current Commencement Date": "2025-12-01", "Current Expiration Date": "2033-10-31", "Current Term": "7 years, 11 months", "Building Type": "Office", "Lease Rentable Area": 6713.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 6713.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 0.0, "Current Annual Rent USD": 17574.0, "Annualized Rent Expense USD per SF": 2.62}, {"System Lease ID": 60224.0, "Client Lease ID": "TX_Baytown_12601 Hatcherville Road", "Client Building ID": "BAY1260", "Lease Hierarchy": "Gulf", "Tenant Legal Name": "EMSI", "Building Name": "Baytown - 12601 Hatcherville Road", "Address 1": "12601 Hatcherville Road", "Address 2": null, "Suite": null, "City": "Baytown", "State": "TX", "Country": "United States", "Lease Status": "MTM", "Original Commencement Date": "2008-04-01", "Current Commencement Date": "2008-10-01", "Current Expiration Date": "2025-12-31", "Current Term": "17 years, 3 months", "Building Type": "Office", "Lease Rentable Area": 1.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 1.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 0.0, "Current Annual Rent USD": null, "Annualized Rent Expense USD per SF": null}, {"System Lease ID": 60239.0, "Client Lease ID": "TX_Baytown_400 Hwy 146", "Client Building ID": "BAY0400", "Lease Hierarchy": "Gulf", "Tenant Legal Name": "Alliance Technical Group", "Building Name": "Baytown - 400 Highway 146", "Address 1": "400 Highway 146", "Address 2": null, "Suite": null, "City": "Baytown", "State": "TX", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2021-04-01", "Current Commencement Date": "2026-04-02", "Current Expiration Date": "2027-04-01", "Current Term": "1 year", "Building Type": "Office", "Lease Rentable Area": 3000.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 3000.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 15644.67, "Current Annual Rent USD": 188146.85, "Annualized Rent Expense USD per SF": 62.72}, {"System Lease ID": 73074.0, "Client Lease ID": "TX_BEAUMONT_4215 W Cardinal", "Client Building ID": "BEA4215", "Lease Hierarchy": "Gulf", "Tenant Legal Name": "Alliance Technical Group", "Building Name": "Beaumont - 4215 W Cardinal Drive", "Address 1": "4215 W Cardinal Drive", "Address 2": null, "Suite": null, "City": "Beaumont", "State": "TX", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2023-04-01", "Current Commencement Date": "2026-02-01", "Current Expiration Date": "2028-01-31", "Current Term": "2 years", "Building Type": "Office/Warehouse", "Lease Rentable Area": 4400.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 4400.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 4620.0, "Current Annual Rent USD": 55220.0, "Annualized Rent Expense USD per SF": 12.55}, {"System Lease ID": 73082.0, "Client Lease ID": "TX_BEAUMONT_4820 and 4840 Ward Drive", "Client Building ID": "BEA4820", "Lease Hierarchy": "Gulf", "Tenant Legal Name": "Alliance Technical Group", "Building Name": "Beaumont - 4820 and 4840 Ward Drive", "Address 1": "4820 and 4840 Ward Drive", "Address 2": null, "Suite": null, "City": "Beaumont", "State": "TX", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2019-07-01", "Current Commencement Date": "2026-02-01", "Current Expiration Date": "2028-01-31", "Current Term": "2 years", "Building Type": "Office/Warehouse", "Lease Rentable Area": 5452.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 5452.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 10195.24, "Current Annual Rent USD": 116945.64, "Annualized Rent Expense USD per SF": 21.45}, {"System Lease ID": 74784.0, "Client Lease ID": "TX_BIG SPRING_1734 PURDUE STREET", "Client Building ID": "BIG1734", "Lease Hierarchy": "SW", "Tenant Legal Name": "Dexter ATC", "Building Name": "Big Spring - 1734 Purdue Street", "Address 1": "1734 Purdue Street", "Address 2": null, "Suite": null, "City": "Big Spring", "State": "TX", "Country": "United States", "Lease Status": "MTM", "Original Commencement Date": "2019-01-23", "Current Commencement Date": "2020-04-22", "Current Expiration Date": "2026-12-31", "Current Term": "6 years, 8 months, 10 days", "Building Type": "Residential", "Lease Rentable Area": 1.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 1.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 2750.0, "Current Annual Rent USD": 33000.0, "Annualized Rent Expense USD per SF": 33000.0}, {"System Lease ID": 73416.0, "Client Lease ID": "TX_GEORGETOWN_105 HALMAR COVE", "Client Building ID": "GEO0105", "Lease Hierarchy": "SW", "Tenant Legal Name": "Grace Consulting, Inc.", "Building Name": "Georgetown - 105 Halmar Cove", "Address 1": "105 Halmar Cove", "Address 2": null, "Suite": "210, 220", "City": "Georgetown", "State": "TX", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2024-08-29", "Current Commencement Date": "2024-08-29", "Current Expiration Date": "2026-09-30", "Current Term": "2 years, 1 month, 2 days", "Building Type": "Office/Warehouse", "Lease Rentable Area": 2100.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 2100.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 2581.0, "Current Annual Rent USD": 23229.0, "Annualized Rent Expense USD per SF": 14.79}, {"System Lease ID": 60761.0, "Client Lease ID": "TX_HOUSTON_6001 SAVOY DRIVE, SUITES #110 (108, 110, 111, 112, 113)", "Client Building ID": "HOU6001", "Lease Hierarchy": "Gulf", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Houston - 6001 Savoy Drive", "Address 1": "6001 Savoy Drive", "Address 2": null, "Suite": "108, 110, 112, 113", "City": "Houston", "State": "TX", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2016-04-01", "Current Commencement Date": "2024-05-24", "Current Expiration Date": "2027-05-14", "Current Term": "2 years, 11 months, 21 days", "Building Type": "Office", "Lease Rentable Area": 3567.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 3567.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 4992.83, "Current Annual Rent USD": 59279.64, "Annualized Rent Expense USD per SF": 16.62}, {"System Lease ID": 63072.0, "Client Lease ID": "TX_Midland_7509 Industrial", "Client Building ID": "TX_Midland_7509 Industrial", "Lease Hierarchy": "SW", "Tenant Legal Name": "Alliance Technical Group", "Building Name": "Midland - 7509 W Industrial", "Address 1": "7509 W Industrial", "Address 2": null, "Suite": "Unit A5", "City": "Midland", "State": "TX", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2025-01-01", "Current Commencement Date": "2025-01-01", "Current Expiration Date": "2027-12-31", "Current Term": "3 years", "Building Type": "Office/Warehouse", "Lease Rentable Area": 2000.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 2000.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 3193.0, "Current Annual Rent USD": 38316.0, "Annualized Rent Expense USD per SF": 19.16}, {"System Lease ID": 65422.0, "Client Lease ID": "TX_Midland_7509 Industrial_B3", "Client Building ID": "TX_Midland_7509 Industrial", "Lease Hierarchy": "SW", "Tenant Legal Name": "Alliance Technical Group", "Building Name": "Midland - 7509 W Industrial", "Address 1": "7509 W Industrial", "Address 2": null, "Suite": "B3", "City": "Midland", "State": "TX", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2025-05-01", "Current Commencement Date": "2025-05-01", "Current Expiration Date": "2027-12-31", "Current Term": "2 years, 8 months", "Building Type": "Office/Warehouse", "Lease Rentable Area": 2000.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 2000.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 3193.0, "Current Annual Rent USD": 38316.0, "Annualized Rent Expense USD per SF": 19.16}, {"System Lease ID": 60269.0, "Client Lease ID": "TX_Pasadena_3622 Fairmont Pkwy-Admin Bldg", "Client Building ID": "PAS3622", "Lease Hierarchy": "Gulf", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Fairmont Plaza West", "Address 1": "3622 Fairmont Pkwy", "Address 2": "Fairmont Plaza West", "Suite": "C", "City": "Pasadena", "State": "TX", "Country": "United States", "Lease Status": "MTM", "Original Commencement Date": "2022-11-01", "Current Commencement Date": "2025-11-01", "Current Expiration Date": "2026-12-31", "Current Term": "1 year, 2 months", "Building Type": "Office", "Lease Rentable Area": 2109.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 2109.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 2592.0, "Current Annual Rent USD": 31104.0, "Annualized Rent Expense USD per SF": 14.75}, {"System Lease ID": 60438.0, "Client Lease ID": "TX_Pasadena_5757 Genoa Red Bluff Road", "Client Building ID": "PAS5757", "Lease Hierarchy": "Gulf", "Tenant Legal Name": "Alliance Source Testing", "Building Name": "Pasadena - 5757 Genoa Red Bluff", "Address 1": "5757 Genoa Red Bluff Rd.", "Address 2": null, "Suite": null, "City": "Pasadena", "State": "TX", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2019-07-01", "Current Commencement Date": "2024-07-01", "Current Expiration Date": "2027-06-30", "Current Term": "3 years", "Building Type": "Lab", "Lease Rentable Area": 12000.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 12000.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 13784.26, "Current Annual Rent USD": 163789.44, "Annualized Rent Expense USD per SF": 13.65}, {"System Lease ID": 65910.0, "Client Lease ID": "TX_PORT LAVACA_225 VIRGINIA", "Client Building ID": "POR0225", "Lease Hierarchy": "Gulf", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Port Lavaca - 225 Virginia Street", "Address 1": "225 Virginia Street", "Address 2": "Georgetown", "Suite": "Unit 4, 6", "City": "Port Lavaca", "State": "TX", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2025-05-01", "Current Commencement Date": "2025-05-01", "Current Expiration Date": "2026-05-01", "Current Term": "1 year, 1 day", "Building Type": "Office", "Lease Rentable Area": 3500.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 3500.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 0.0, "Current Annual Rent USD": 14112.9, "Annualized Rent Expense USD per SF": 12.16}, {"System Lease ID": 64067.0, "Client Lease ID": "TX_Stafford_230 Ave E", "Client Building ID": "STA0230", "Lease Hierarchy": "Gulf", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Stafford - 230 Ave E.", "Address 1": "230 Ave E.", "Address 2": null, "Suite": "Unit 254, Unit 250", "City": "Stafford", "State": "TX", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2025-01-01", "Current Commencement Date": "2025-01-01", "Current Expiration Date": "2026-12-31", "Current Term": "2 years", "Building Type": "Office", "Lease Rentable Area": 5000.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 5000.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 5500.0, "Current Annual Rent USD": 66000.0, "Annualized Rent Expense USD per SF": 13.2}, {"System Lease ID": 60262.0, "Client Lease ID": "UT_West Valley City_3683 West 2270 South, Suite E and F", "Client Building ID": "WES3683", "Lease Hierarchy": "SW", "Tenant Legal Name": "Alliance Source Testing, L.L.C.", "Building Name": "West Valley - 3683 West 2270 South", "Address 1": "3683 West 2270 South", "Address 2": "Presidential Business Center", "Suite": "E and F", "City": "West Valley", "State": "UT", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2017-12-01", "Current Commencement Date": "2025-12-01", "Current Expiration Date": "2028-11-30", "Current Term": "3 years", "Building Type": "Office", "Lease Rentable Area": 8800.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 8800.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 6267.36, "Current Annual Rent USD": 75333.28, "Annualized Rent Expense USD per SF": 8.56}, {"System Lease ID": 60299.0, "Client Lease ID": "VA_Roanoke_1529 Seibel Drive Ne", "Client Building ID": "ROA1529", "Lease Hierarchy": "East", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Roanoke - 1529 Seibel Dr. N.E.", "Address 1": "1529 Seibel Dr. N.E.", "Address 2": null, "Suite": null, "City": "Roanoke", "State": "VA", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2023-04-01", "Current Commencement Date": "2023-04-01", "Current Expiration Date": "2028-03-31", "Current Term": "5 years", "Building Type": "Industrial", "Lease Rentable Area": 5000.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 5000.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 8914.47, "Current Annual Rent USD": 105935.04, "Annualized Rent Expense USD per SF": 21.19}, {"System Lease ID": 60298.0, "Client Lease ID": "WA_Seattle_3600 Fremont Avenue North", "Client Building ID": "SEA3600", "Lease Hierarchy": "NW", "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Seattle - 3600 Fremont Avenue North and 700 North 36th Street", "Address 1": "3600 Fremont Avenue North and 700 North 36th Street", "Address 2": null, "Suite": null, "City": "Seattle", "State": "WA", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2023-01-01", "Current Commencement Date": "2023-01-01", "Current Expiration Date": "2028-01-31", "Current Term": "5 years, 1 month", "Building Type": "Office/Lab", "Lease Rentable Area": 4325.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 4325.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 9537.0, "Current Annual Rent USD": 113990.0, "Annualized Rent Expense USD per SF": 26.36}, {"System Lease ID": 60311.0, "Client Lease ID": "WA_Seattle_3612 Fremont Avenue North - Admin Bldg", "Client Building ID": "WA _ Seattle _ 3612 Freemont Avenue N - Admin Bldg", "Lease Hierarchy": "NW", "Tenant Legal Name": "Alliance Technical Group, LLC.", "Building Name": "Seattle - 3612 Fremont Avenue North", "Address 1": "3612 Fremont Avenue North", "Address 2": null, "Suite": "Unit A, B", "City": "Seattle", "State": "WA", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2020-01-01", "Current Commencement Date": "2023-01-01", "Current Expiration Date": "2028-01-31", "Current Term": "5 years, 1 month", "Building Type": "Office/Lab", "Lease Rentable Area": 2120.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 2120.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 6120.0, "Current Annual Rent USD": 71040.0, "Annualized Rent Expense USD per SF": 33.51}, {"System Lease ID": 72198.0, "Client Lease ID": "WA_Seattle_716 N 34th Street", "Client Building ID": "WA_Seattle_716 N 34th Street", "Lease Hierarchy": "NW", "Tenant Legal Name": "Alliance Technical Group LLC", "Building Name": "SEA7047", "Address 1": "704-716 North 34th Street", "Address 2": null, "Suite": null, "City": "Seattle", "State": "WA", "Country": "United States", "Lease Status": "Pending", "Original Commencement Date": "2026-03-01", "Current Commencement Date": "2026-03-01", "Current Expiration Date": "2036-12-31", "Current Term": "10 years, 10 months", "Building Type": "Office/Lab", "Lease Rentable Area": 10238.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 10238.0, "Ownership Type": "Leased", "Lease Type": "Lease", "Current Month USD Rent Expenses": 0.0, "Current Annual Rent USD": 24304.5, "Annualized Rent Expense USD per SF": 2.83}, {"System Lease ID": 64295.0, "Client Lease ID": "WA_VANCOUVER_2700 NE Burton Road", "Client Building ID": "VAN2700", "Lease Hierarchy": "NW", "Tenant Legal Name": "Advanced Industrial Resources", "Building Name": "Vancouver - 2700 NE Burton Road", "Address 1": "2700 NE Burton Road", "Address 2": null, "Suite": "Suite A", "City": "Vancouver", "State": "WA", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2023-08-01", "Current Commencement Date": "2024-07-11", "Current Expiration Date": "2028-07-31", "Current Term": "4 years, 21 days", "Building Type": "Other", "Lease Rentable Area": 4740.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 4740.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 5779.48, "Current Annual Rent USD": 68175.45, "Annualized Rent Expense USD per SF": 14.38}, {"System Lease ID": 65916.0, "Client Lease ID": "WY_SHERIDAN_2910 RUSSELL DRIVE", "Client Building ID": "SHE2910", "Lease Hierarchy": null, "Tenant Legal Name": "Alliance Technical Group, LLC", "Building Name": "Sheridan - 2910 Russell Drive", "Address 1": "2910 Russell Drive", "Address 2": null, "Suite": null, "City": "Sheridan", "State": "WY", "Country": "United States", "Lease Status": "Active", "Original Commencement Date": "2025-05-12", "Current Commencement Date": "2025-05-12", "Current Expiration Date": "2030-05-31", "Current Term": "5 years, 20 days", "Building Type": "Office/Warehouse", "Lease Rentable Area": 6000.0, "Measure Units": "SF", "Lease Rentable Area Converted to SF": 6000.0, "Ownership Type": "Leased", "Lease Type": "Lessee", "Current Month USD Rent Expenses": 10500.0, "Current Annual Rent USD": 126000.0, "Annualized Rent Expense USD per SF": 21.0}, {"System Lease ID": null, "Client Lease ID": null, "Client Building ID": "DEC0214", "Lease Hierarchy": null, "Tenant Legal Name": null, "Building Name": "Decatur - 214 Central Circle SW", "Address 1": "214 Central Circle SW", "Address 2": "Morgan", "Suite": null, "City": "Decatur", "State": "AL", "Country": "United States", "Lease Status": null, "Original Commencement Date": null, "Current Commencement Date": null, "Current Expiration Date": null, "Current Term": null, "Building Type": "Office/Warehouse", "Lease Rentable Area": null, "Measure Units": null, "Lease Rentable Area Converted to SF": null, "Ownership Type": "Owned", "Lease Type": null, "Current Month USD Rent Expenses": null, "Current Annual Rent USD": null, "Annualized Rent Expense USD per SF": null}, {"System Lease ID": null, "Client Lease ID": null, "Client Building ID": "FOR1008", "Lease Hierarchy": null, "Tenant Legal Name": null, "Building Name": "Fort Stockton - 1008 North Front Street", "Address 1": "1008 North Front Street", "Address 2": null, "Suite": null, "City": "Fort Stockton", "State": "TX", "Country": "United States", "Lease Status": null, "Original Commencement Date": null, "Current Commencement Date": null, "Current Expiration Date": null, "Current Term": null, "Building Type": "Office/Warehouse", "Lease Rentable Area": null, "Measure Units": null, "Lease Rentable Area Converted to SF": null, "Ownership Type": "Owned", "Lease Type": null, "Current Month USD Rent Expenses": null, "Current Annual Rent USD": null, "Annualized Rent Expense USD per SF": null}];
+const TODAY = new Date("2026-08-10");
+
+// separate leased sites (with financial data) from owned/no-data records
+const rows = RAW.map((r,i)=>({...r, _id:i}));
+
+function fmtMoney(v){
+  if(v===null||v===undefined||isNaN(v)) return "&mdash;";
+  return "$" + Math.round(v).toLocaleString();
+}
+function fmtNum(v){
+  if(v===null||v===undefined||isNaN(v)) return "&mdash;";
+  return Math.round(v).toLocaleString();
+}
+function fmtDate(s){
+  if(!s) return "&mdash;";
+  const d = new Date(s);
+  return d.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
+}
+function monthsUntil(s){
+  if(!s) return null;
+  const d = new Date(s);
+  return (d - TODAY) / (1000*60*60*24*30.44);
+}
+
+// ---------- KPI calculations ----------
+const leased = rows.filter(r => r['Ownership Type'] === 'Leased');
+const owned = rows.filter(r => r['Ownership Type'] === 'Owned');
+const totalAnnualRent = leased.reduce((a,r)=> a + (r['Current Annual Rent USD']||0), 0);
+const totalSF = leased.reduce((a,r)=> a + (r['Lease Rentable Area Converted to SF']||0), 0);
+const avgRentSF = totalAnnualRent / (leased.reduce((a,r)=> a + (r['Current Annual Rent USD']?( r['Lease Rentable Area Converted to SF']||0):0),0) || 1);
+const mtmCount = rows.filter(r=>r['Lease Status']==='MTM').length;
+const expiring12 = leased.filter(r=>{
+  const m = monthsUntil(r['Current Expiration Date']);
+  return m!==null && m<=12 && m>=0;
+}).length;
+const activeCount = rows.filter(r=>r['Lease Status']==='Active').length;
+
+const kpiData = [
+  {label:"Total Sites", value: rows.length.toLocaleString(), foot: leased.length + " leased &middot; " + owned.length + " owned"},
+  {label:"Total Annual Rent", value: fmtMoney(totalAnnualRent), foot: "across " + leased.length + " leased sites"},
+  {label:"Total Leased SF", value: fmtNum(totalSF), foot: "square feet under lease"},
+  {label:"Avg. Rent / SF", value: "$" + avgRentSF.toFixed(2), foot: "portfolio-weighted average"},
+  {label:"Expiring \u2264 12 mo", value: expiring12, foot: "renewal or exit decision needed", cls: expiring12>0 ? "red" : ""},
+  {label:"Month-to-Month", value: mtmCount, foot: "sites with no fixed term", cls: mtmCount>0 ? "orange" : ""},
+];
+document.getElementById('kpiRow').innerHTML = kpiData.map(k=>`
+  <div class="kpi">
+    <div class="label">${k.label}</div>
+    <div class="value ${k.cls||''} num">${k.value}</div>
+    <div class="foot">${k.foot}</div>
+  </div>`).join('');
+
+// ---------- expiration ribbon ----------
+const ribbonItems = leased.filter(r=>r['Current Expiration Date']).sort((a,b)=> new Date(a['Current Expiration Date']) - new Date(b['Current Expiration Date']));
+document.getElementById('ribbon').innerHTML = ribbonItems.map(r=>{
+  const m = monthsUntil(r['Current Expiration Date']);
+  let urg = 'blue';
+  if(m<0){urg='red';} else if(m<=6){urg='red';} else if(m<=12){urg='orange';}
+  return `<div class="rib-item urg-${urg}" title="${r['Building Name']}">
+    <div class="rib-date">${fmtDate(r['Current Expiration Date'])}</div>
+    <div class="rib-city">${r['City']||''}, ${r['State']||''}</div>
+    <div class="rib-rent">${fmtMoney(r['Current Annual Rent USD'])}/yr</div>
+  </div>`;
+}).join('');
+
+// ---------- charts ----------
+const regionAgg = {};
+leased.forEach(r=>{
+  const key = r['Lease Hierarchy'] || 'Unassigned';
+  regionAgg[key] = (regionAgg[key]||0) + (r['Current Annual Rent USD']||0);
+});
+const regionLabels = Object.keys(regionAgg).sort((a,b)=>regionAgg[b]-regionAgg[a]);
+new Chart(document.getElementById('regionChart'), {
+  type:'bar',
+  data:{
+    labels: regionLabels,
+    datasets:[{
+      data: regionLabels.map(l=>Math.round(regionAgg[l])),
+      backgroundColor: '#214592',
+      borderRadius: 4,
+      maxBarThickness: 34
+    }]
+  },
+  options:{
+    responsive:true,
+    maintainAspectRatio:false,
+    plugins:{legend:{display:false}, tooltip:{callbacks:{label:(c)=>'$'+c.parsed.y.toLocaleString()}}},
+    scales:{
+      y:{ticks:{callback:(v)=>'$'+(v/1000).toFixed(0)+'k'}, grid:{color:'#eef0f4'}},
+      x:{grid:{display:false}}
+    }
+  }
+});
+
+const typeAgg = {};
+leased.forEach(r=>{
+  const key = r['Building Type'] || 'Unspecified';
+  typeAgg[key] = (typeAgg[key]||0) + (r['Lease Rentable Area Converted to SF']||0);
+});
+const typeLabels = Object.keys(typeAgg).sort((a,b)=>typeAgg[b]-typeAgg[a]);
+const palette = ['#214592','#dd6e0c','#5470b5','#efa059','#8896c4','#444444','#b7bcc6','#152d61','#f3c08c','#9aa4c4','#6e7280','#d6dbe8'];
+new Chart(document.getElementById('typeChart'), {
+  type:'doughnut',
+  data:{
+    labels: typeLabels,
+    datasets:[{
+      data: typeLabels.map(l=>Math.round(typeAgg[l])),
+      backgroundColor: typeLabels.map((_,i)=>palette[i%palette.length]),
+      borderWidth:2,
+      borderColor:'#fff'
+    }]
+  },
+  options:{
+    responsive:true,
+    maintainAspectRatio:false,
+    plugins:{legend:{position:'right', labels:{boxWidth:11, font:{size:11}}}},
+    cutout:'58%'
+  }
+});
+
+// ---------- filters ----------
+function uniqueSorted(key){
+  return [...new Set(rows.map(r=>r[key]).filter(Boolean))].sort();
+}
+function populateSelect(id, key){
+  const sel = document.getElementById(id);
+  uniqueSorted(key).forEach(v=>{
+    const opt = document.createElement('option');
+    opt.value = v; opt.textContent = v;
+    sel.appendChild(opt);
+  });
+}
+populateSelect('fRegion','Lease Hierarchy');
+populateSelect('fState','State');
+populateSelect('fStatus','Lease Status');
+populateSelect('fType','Building Type');
+
+let sortKey = 'Current Expiration Date';
+let sortDir = 1;
+let expandedId = null;
+
+function applyFilters(){
+  const q = document.getElementById('searchBox').value.trim().toLowerCase();
+  const region = document.getElementById('fRegion').value;
+  const state = document.getElementById('fState').value;
+  const status = document.getElementById('fStatus').value;
+  const type = document.getElementById('fType').value;
+
+  let filtered = rows.filter(r=>{
+    if(region && r['Lease Hierarchy']!==region) return false;
+    if(state && r['State']!==state) return false;
+    if(status && r['Lease Status']!==status) return false;
+    if(type && r['Building Type']!==type) return false;
+    if(q){
+      const hay = [r['Building Name'],r['City'],r['State'],r['Tenant Legal Name'],r['Address 1']].join(' ').toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  filtered.sort((a,b)=>{
+    let av = a[sortKey], bv = b[sortKey];
+    if(av===null||av===undefined) av = sortDir===1 ? Infinity : -Infinity;
+    if(bv===null||bv===undefined) bv = sortDir===1 ? Infinity : -Infinity;
+    if(sortKey==='Current Expiration Date'){
+      av = av===Infinity||av===-Infinity ? av : new Date(av).getTime();
+      bv = bv===Infinity||bv===-Infinity ? bv : new Date(bv).getTime();
+    }
+    if(typeof av === 'string') return sortDir * av.localeCompare(bv);
+    return sortDir * (av - bv);
+  });
+
+  renderTable(filtered);
+  document.getElementById('resultCount').textContent = filtered.length + ' of ' + rows.length + ' sites';
+}
+
+function renderTable(data){
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = data.map(r=>{
+    const statusCls = 'status-' + (r['Lease Status'] || (r['Ownership Type']==='Owned' ? 'Owned' : 'na'));
+    const statusLabel = r['Lease Status'] || (r['Ownership Type']==='Owned' ? 'Owned' : '\u2014');
+    const isExpanded = expandedId === r._id;
+    let html = `<tr data-id="${r._id}" class="main-row">
+      <td class="expand-icon">${isExpanded?'\u25be':'\u25b8'}</td>
+      <td class="wrap-cell"><strong>${r['Building Name']||'\u2014'}</strong><br><span style="color:var(--muted);font-size:11.5px;">${r['City']||''}${r['City']&&r['Country']&&r['Country']!=='United States'?', '+r['Country']:''}</span></td>
+      <td>${r['State']||'\u2014'}</td>
+      <td>${r['Lease Hierarchy']||'\u2014'}</td>
+      <td><span class="status-pill ${statusCls}">${statusLabel}</span></td>
+      <td>${r['Building Type']||'\u2014'}</td>
+      <td class="num">${fmtNum(r['Lease Rentable Area Converted to SF'])}</td>
+      <td class="num">${fmtMoney(r['Current Annual Rent USD'])}</td>
+      <td class="num">${r['Annualized Rent Expense USD per SF']!=null ? '$'+r['Annualized Rent Expense USD per SF'].toFixed(2) : '\u2014'}</td>
+      <td>${fmtDate(r['Current Expiration Date'])}</td>
+    </tr>`;
+    if(isExpanded){
+      html += `<tr class="row-detail"><td colspan="10"><div class="detail-grid">
+        <div><span>Tenant Legal Name</span>${r['Tenant Legal Name']||'\u2014'}</div>
+        <div><span>Address</span>${[r['Address 1'],r['Address 2'],r['Suite']?('Suite '+r['Suite']):null].filter(Boolean).join(', ')||'\u2014'}</div>
+        <div><span>Country</span>${r['Country']||'\u2014'}</div>
+        <div><span>Ownership Type</span>${r['Ownership Type']||'\u2014'}</div>
+        <div><span>Lease Type</span>${r['Lease Type']||'\u2014'}</div>
+        <div><span>Original Commencement</span>${fmtDate(r['Original Commencement Date'])}</div>
+        <div><span>Current Commencement</span>${fmtDate(r['Current Commencement Date'])}</div>
+        <div><span>Current Term</span>${r['Current Term']||'\u2014'}</div>
+        <div><span>Current Monthly Rent</span>${fmtMoney(r['Current Month USD Rent Expenses'])}</div>
+        <div><span>System Lease ID</span>${r['System Lease ID']||'\u2014'}</div>
+        <div><span>Client Lease ID</span>${r['Client Lease ID']||'\u2014'}</div>
+        <div><span>Client Building ID</span>${r['Client Building ID']||'\u2014'}</div>
+      </div></td></tr>`;
+    }
+    return html;
+  }).join('');
+
+  tbody.querySelectorAll('.main-row').forEach(tr=>{
+    tr.addEventListener('click', ()=>{
+      const id = parseInt(tr.getAttribute('data-id'));
+      expandedId = expandedId === id ? null : id;
+      applyFilters();
+    });
+  });
+}
+
+document.querySelectorAll('#leaseTable thead th').forEach(th=>{
+  th.addEventListener('click', ()=>{
+    const key = th.getAttribute('data-key');
+    if(key === '_expand') return;
+    if(sortKey === key){ sortDir *= -1; } else { sortKey = key; sortDir = 1; }
+    document.querySelectorAll('#leaseTable thead th .arrow').forEach(a=>a.remove());
+    const arrow = document.createElement('span');
+    arrow.className='arrow';
+    arrow.textContent = sortDir===1 ? '\u25b2' : '\u25bc';
+    th.appendChild(arrow);
+    applyFilters();
+  });
+});
+
+['searchBox','fRegion','fState','fStatus','fType'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', applyFilters);
+  document.getElementById(id).addEventListener('change', applyFilters);
+});
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  document.getElementById('searchBox').value='';
+  ['fRegion','fState','fStatus','fType'].forEach(id=>document.getElementById(id).value='');
+  applyFilters();
+});
+
+applyFilters();
+</script>
+</body>
+</html>
