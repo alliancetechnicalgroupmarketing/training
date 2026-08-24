@@ -303,11 +303,11 @@ const HOTSPOTS = [
     marker:[-45,15,0], camPos:[-76,20,40], camTarget:[-42,7,-2],
     rules:[
       'Numeric emission limits for total HAP: formaldehyde, methanol, phenol, acetaldehyde, acrolein, and propionaldehyde.',
-      'First-time standards for combustion pollutants: non-mercury HAP metals, mercury, hydrogen chloride, and PAH, plus dioxin/furan work practices.',
+      'First-time standards for combustion pollutants: non-mercury HAP metals, mercury, hydrogen chloride, dioxin/furan, and PAH, plus dioxin/furan work practices.',
       'Initial performance test sets operating parameter limits; continuous parametric monitoring follows.',
       'Units that relied on vacated "no-control" MACT determinations now carry limits for the first time since 2004.'
     ],
-    methods:['Method 320 FTIR','Method 316','Method 25A','Method 29','Method 30B','Method 26A','Method 23','Methods 1–4'],
+    methods:['Method 320 FTIR','Method 316','NCASI A105.01','Method 25A','Method 29','Method 30B','Method 26A','Method 23','Methods 1–4'],
     atg:[
       'Protocol development written to the rule\u2019s compliance options and your agency\u2019s expectations',
       'Field crews experienced on high-moisture wood dryer exhaust',
@@ -319,7 +319,7 @@ const HOTSPOTS = [
   },
   {
     id:'rmh',
-    title:'Refiners, Cyclones & Resinated Material Handling',
+    title:'Refiners, Cyclones & Resinated Material Handling (RMH) Units',
     unit:'Atmospheric refiners · RMH units · cyclones and material transfer',
     eyebrow:'Regulated Unit 02',
     marker:[8,24,14], camPos:[34,24,46], camTarget:[6,10,12],
@@ -329,7 +329,7 @@ const HOTSPOTS = [
       'Work practice standards for RMH process units, stand-alone digesters, fiber washers, and log vats.',
       'Every obligation is new: applicability, emissions inventory, testing, monitoring, recordkeeping, and permit modification.'
     ],
-    methods:['Method 320 FTIR','Method 25A','Methods 1–4'],
+    methods:['Method 320 FTIR','NCASI A105.01','Method 25A','Methods 1–4'],
     atg:[
       'Baseline emissions characterization for units never tested before',
       'HAP inventory testing to support applicability and permitting',
@@ -349,7 +349,7 @@ const HOTSPOTS = [
       'Common at OSB, engineered lumber, and wood I-joist facilities.',
       'Facilities must evaluate MDI usage, quantify potential emissions, and implement work practices or engineering controls.'
     ],
-    methods:['MDI-specific sampling','Method 320 FTIR','Engineering test programs'],
+    methods:['Method 326 (MDI)','Method 320 FTIR','Engineering test programs'],
     atg:[
       'MDI emissions characterization at press vents and enclosures',
       'Engineering studies to size controls before committing capital',
@@ -365,15 +365,16 @@ const HOTSPOTS = [
     eyebrow:'Regulated Unit 04',
     marker:[-5,17,-42], camPos:[20,20,-74], camTarget:[-6,8,-40],
     rules:[
-      'Add-on controls (RTOs, biofilters, wet scrubbers) are the likely path to dryer emission limits at many facilities.',
+      'Add-on controls (RTOs, biofilters, wet scrubbers, wet ESPs) are the likely path to dryer emission limits, especially PM, at many facilities.',
+      'Opacity limits apply to dry control devices.',
       'Performance testing establishes the operating parameter limits the control must hold continuously.',
       'Continuous parametric monitoring, recordkeeping, and reporting demonstrate ongoing compliance between tests.',
       'Control additions can trigger NSR/PSD review and Title V permit modifications.'
     ],
-    methods:['Inlet/outlet testing','Destruction efficiency','RATA','CEMS certification'],
+    methods:['Inlet/outlet testing','Destruction efficiency','RATA','CEMS/COMS certification'],
     atg:[
       'Control device performance testing, inlet and outlet',
-      'CEMS certification, RATA, and ongoing QA support',
+      'CEMS/COMS certification, RATA, and ongoing QA support',
       'Parametric monitoring setup tied to tested parameter limits',
       'Recurring compliance test programs through 2029 and beyond'
     ],
@@ -391,7 +392,7 @@ const HOTSPOTS = [
       'A formal operation and maintenance plan is required for every kiln.',
       'Annual burner tune-ups for direct-fired kilns.',
       'Temperature and moisture operating restrictions, or a site-specific plan to prevent over-drying.',
-      'Work practices still require documented programs, records, and compliance demonstration.'
+      'Work practices still require documented programs, records, reporting, and compliance demonstration.'
     ],
     methods:['Burner tune-up verification','Combustion testing support'],
     atg:[
@@ -414,7 +415,7 @@ const HOTSPOTS = [
       'Protocol, field testing, in-house laboratory, monitoring, and reporting under one roof shortens turnaround and removes handoffs.',
       'We work alongside your environmental consultant, or carry the measurement program end to end.'
     ],
-    methods:['Protocol','Stack testing','In-house lab','CEMS / parametric','ERT reporting'],
+    methods:['Protocol','Stack testing','In-house lab','CEMS/COMS/parametric','ERT reporting'],
     atg:[
       'One scope from applicability support through ongoing compliance testing',
       'Scheduling priority matters: facilities that book 2027 testing keep room to correct and retest',
