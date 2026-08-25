@@ -1222,6 +1222,19 @@ function clickCheck(x,y){
 const panel = document.getElementById('panel');
 let current = -1, tourOn = false, tourTimer = null;
 
+/* When the dossier panel is open it covers part of the viewport (right side on
+   desktop, bottom sheet on mobile). Shift the camera's view so the subject
+   centers in the region that stays visible, and clear it when the panel closes. */
+function updateViewOffset(){
+  if(!panel.classList.contains('open')){ camera.clearViewOffset(); return; }
+  if(matchMedia('(max-width:760px)').matches){
+    camera.setViewOffset(innerWidth, innerHeight, 0, Math.round(innerHeight*0.26), innerWidth, innerHeight);
+  } else {
+    const pw = Math.min(panel.offsetWidth || 430, innerWidth*0.55);
+    camera.setViewOffset(innerWidth, innerHeight, Math.round(pw/2), 0, innerWidth, innerHeight);
+  }
+}
+
 function openHotspot(i){
   current = i;
   const h = HOTSPOTS[i];
@@ -1238,6 +1251,7 @@ function openHotspot(i){
   document.getElementById('p-deadline').innerHTML = '<span>⏱</span><span>'+h.deadline+'</span>';
   litStages(h.stages);
   panel.classList.add('open');
+  updateViewOffset();
   flyTo(h.camPos, h.camTarget);
   panel.querySelector('.panel-body').scrollTop = 0;
 }
@@ -1245,6 +1259,7 @@ function closePanel(){
   panel.classList.remove('open');
   litStages(null);
   current = -1;
+  updateViewOffset();
 }
 document.getElementById('p-close').addEventListener('click', ()=>{ stopTour(); closePanel(); });
 document.getElementById('p-prev').addEventListener('click', ()=>{ stopTour(); openHotspot((current-1+HOTSPOTS.length)%HOTSPOTS.length); });
@@ -1313,6 +1328,7 @@ addEventListener('resize', ()=>{
   camera.aspect = innerWidth/innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
+  updateViewOffset();
 });
 
 /* ---------------- main loop ---------------- */
